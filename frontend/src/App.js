@@ -12,7 +12,6 @@ import DoctorDashboard from "./pages/DoctorDashboard";
 import DoctorProfile from "./pages/DoctorProfile";
 import Prescription from "./pages/Prescription";
 import AdminPendingDoctors from "./pages/AdminPendingDoctors";
-import AdminDirect from "./pages/AdminDirect";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Contact from "./pages/Contact";
@@ -115,7 +114,7 @@ return (
         <Route path="/doctor/profile" element={<DoctorProfile />} />
         <Route path="/prescription/:id" element={<Prescription />} />
         <Route path="/admin/doctors/pending" element={<AdminPendingDoctors />} />
-        <Route path="/admin" element={<AdminDirect />} />
+        <Route path="/admin" element={<AdminLogin />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/appointments" element={<AdminAppointments />} />
         <Route path="/admin/add-doctor" element={<AdminAddDoctor />} />
