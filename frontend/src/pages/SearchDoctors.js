@@ -143,52 +143,44 @@ export default function SearchDoctors() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
-          <div className="grid grid-cols-12 gap-8">
-            <aside className="col-span-12 md:col-span-3 animate-slide-in-left">
-              <div className="bg-white/90 backdrop-blur-sm border border-white/20 rounded-2xl p-6 shadow-2xl hover:scale-105 transition-transform duration-300">
-              <div className="mb-6">
-                <div className="flex items-center gap-3 text-indigo-700 font-bold text-lg">
-                  <Logo size={28} />
-                  <span>HospoZen</span>
-                </div>
-              </div>
-                <nav className="space-y-3 text-slate-700">
-                  <Link to="/admin/dashboard" className="block px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:scale-105 transition-all duration-300 font-medium">Dashboard</Link>
-                  <Link to="/admin/appointments" className="block px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:scale-105 transition-all duration-300 font-medium">Appointments</Link>
-                  <Link to="/admin/add-doctor" className="block px-4 py-3 rounded-xl hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 hover:scale-105 transition-all duration-300 font-medium">Add Doctor</Link>
-
-                  <div className="px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-100 to-purple-100 text-indigo-700 font-semibold animate-fade-in shadow-lg" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>Doctors List</div>
-                </nav>
-              </div>
-            </aside>
-            <main className="col-span-12 md:col-span-9 animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
-              <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-left">Doctors Management</h2>
-                <button
-                  onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-                  className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
-                >
-                  Logout
-                </button>
-              </div>
-              {error && <div className="mb-6 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-4 animate-fade-in shadow-lg">{error}</div>}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                {list.map((d, index) => (
-                  <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
-                    <div className="relative">
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <Link to="/admin/dashboard" className="flex items-center gap-2 text-indigo-700">
+                <Logo size={28} />
+                <span className="font-semibold">HospoZen</span>
+              </Link>
+              <nav className="flex items-center gap-6 ml-6 text-slate-700">
+                <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
+                <Link to="/admin/appointments" className="nav-link">Appointments</Link>
+                <Link to="/admin/add-doctor" className="nav-link">Add Doctor</Link>
+                <Link to="/admin/doctors" className="nav-link text-indigo-700 font-semibold">Doctors List</Link>
+              </nav>
+            </div>
+            <button
+              onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
+              className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300"
+            >
+              Logout
+            </button>
+          </div>
+          <div className="animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Doctors Management</h2>
+            </div>
+            {error && <div className="mb-6 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-4 animate-fade-in shadow-lg">{error}</div>}
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              {list.map((d, index) => (
+                <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
+                  <div className="relative">
                     {photoOf(d) ? (
-                      <img
-                        src={photoOf(d)}
-                        alt="Doctor"
-                        className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700"
-                      />
+                      <img src={photoOf(d)} alt="Doctor" className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700" />
                     ) : (
                       <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center hover:scale-110 transition-transform duration-700">
                         <div className="text-6xl text-slate-400">👨‍⚕️</div>
                       </div>
                     )}
                     <div className="absolute top-3 right-3 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.3}s`, animationFillMode: 'forwards' }}>
-                    {(() => {
+                      {(() => {
                         const online = typeof d.isOnline === 'boolean' ? d.isOnline : null;
                         const busy = typeof d.isBusy === 'boolean' ? d.isBusy : null;
                         if (online === null && busy === null) return null;
@@ -197,21 +189,20 @@ export default function SearchDoctors() {
                         return <span className={`inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg hover:scale-105 transition-transform duration-300 ${cls}`}>{txt}</span>;
                       })()}
                     </div>
-                    </div>
-                    <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
-                      <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                      <p className="text-sm text-indigo-600 font-medium mb-2">{(d.specializations && d.specializations[0]) || ""}</p>
-                      {typeof d.consultationFees === 'number' && (
-                        <div className="text-sm text-slate-600 font-semibold mb-3">Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
-                      )}
-                      <Link to={`/admin/doctors/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                        View Profile
-                      </Link>
-                    </div>
                   </div>
-                ))}
-              </div>
-            </main>
+                  <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
+                    <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
+                    <p className="text-sm text-indigo-600 font-medium mb-2">{(d.specializations && d.specializations[0]) || ""}</p>
+                    {typeof d.consultationFees === 'number' && (
+                      <div className="text-sm text-slate-600 font-semibold mb-3">Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
+                    )}
+                    <Link to={`/admin/doctors/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                      View Profile
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

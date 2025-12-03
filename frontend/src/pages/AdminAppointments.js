@@ -72,34 +72,30 @@ export default function AdminAppointments() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link to="/admin/dashboard" className="flex items-center gap-2 text-indigo-700">
+            <Logo size={28} />
+            <span className="font-semibold">HospoZen</span>
+          </Link>
+          <nav className="flex items-center gap-6 ml-6 text-slate-700">
+            <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/admin/appointments" className="nav-link text-indigo-700 font-semibold">Appointments</Link>
+            <Link to="/admin/add-doctor" className="nav-link">Add Doctor</Link>
+            <Link to="/admin/doctors" className="nav-link">Doctors List</Link>
+          </nav>
+        </div>
+        <button
+          onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
+          className="btn-gradient"
+        >
+          Logout
+        </button>
+      </div>
       <div className="grid grid-cols-12 gap-6">
-        <aside className="col-span-12 md:col-span-3">
-          <div className="glass-card p-4 animate-fade-in">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 text-indigo-700 font-semibold">
-                <Logo size={28} />
-                <span>HospoZen</span>
-              </div>
-            </div>
-            <nav className="space-y-2 text-slate-700">
-              <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
-              <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Appointments</div>
-              <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
-              
-              <Link to="/admin/doctors" className="block px-3 py-2 rounded-md hover:bg-slate-50">Doctors List</Link>
-            </nav>
-          </div>
-        </aside>
-
-        <main className="col-span-12 md:col-span-9 animate-fade-in">
+        <main className="col-span-12 animate-fade-in">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl font-semibold">All Appointments</h1>
-            <button
-              onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-              className="btn-gradient"
-            >
-              Logout
-            </button>
           </div>
           <div className="glass-card overflow-hidden">
             <div className="overflow-x-auto">

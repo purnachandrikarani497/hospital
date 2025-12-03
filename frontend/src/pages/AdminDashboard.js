@@ -38,7 +38,18 @@ export default function AdminDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-semibold">Admin Dashboard</h1>
+        <div className="flex items-center gap-3">
+          <Link to="/admin/dashboard" className="flex items-center gap-2 text-indigo-700">
+            <Logo size={28} />
+            <span className="font-semibold">HospoZen</span>
+          </Link>
+          <nav className="flex items-center gap-6 ml-6 text-slate-700">
+            <Link to="/admin/dashboard" className="nav-link text-indigo-700 font-semibold">Dashboard</Link>
+            <Link to="/admin/appointments" className="nav-link">Appointments</Link>
+            <Link to="/admin/add-doctor" className="nav-link">Add Doctor</Link>
+            <Link to="/admin/doctors" className="nav-link">Doctors List</Link>
+          </nav>
+        </div>
         <button
           onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
           className="btn-gradient"
@@ -47,25 +58,7 @@ export default function AdminDashboard() {
         </button>
       </div>
       <div className="grid grid-cols-12 gap-6">
-        <aside className="col-span-12 md:col-span-3">
-          <div className="glass-card p-4 animate-fade-in">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 text-indigo-700 font-semibold">
-                <Logo size={28} />
-                <span>HospoZen</span>
-              </div>
-            </div>
-            <nav className="space-y-2 text-slate-700">
-              <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Dashboard</div>
-              <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
-              <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
-              
-              <Link to="/admin/doctors" className="block px-3 py-2 rounded-md hover:bg-slate-50">Doctors List</Link>
-            </nav>
-          </div>
-        </aside>
-
-        <main className="col-span-12 md:col-span-9">
+        <main className="col-span-12">
           <div className="flex flex-wrap gap-4 mb-6">
             <div className="relative flex-1 min-w-[160px] bg-white border border-slate-200 rounded-xl p-4 transition-transform duration-300 hover:scale-105 hover:shadow-lg hover:bg-indigo-50">
               <div className="flex items-center justify-between">

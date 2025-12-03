@@ -70,34 +70,30 @@ export default function AdminAddDoctor() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 mt-8">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">
+          <Link to="/admin/dashboard" className="flex items-center gap-2 text-indigo-700">
+            <Logo size={24} />
+            <span className="font-semibold">HospoZen</span>
+          </Link>
+          <nav className="flex items-center gap-6 ml-6 text-slate-700">
+            <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
+            <Link to="/admin/appointments" className="nav-link">Appointments</Link>
+            <Link to="/admin/add-doctor" className="nav-link text-indigo-700 font-semibold">Add Doctor</Link>
+            <Link to="/admin/doctors" className="nav-link">Doctors List</Link>
+          </nav>
+        </div>
+        <button
+          onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
+          className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
+        >
+          Logout
+        </button>
+      </div>
       <div className="grid grid-cols-12 gap-6">
-        <aside className="col-span-12 md:col-span-3">
-          <div className="bg-white border border-slate-200 rounded-xl p-4">
-            <div className="mb-4">
-              <div className="flex items-center gap-2 text-indigo-700 font-semibold">
-                <Logo size={24} />
-                <span>HospoZen</span>
-              </div>
-            </div>
-            <nav className="space-y-2 text-slate-700">
-              <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
-              <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
-              <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Add Doctor</div>
-              
-              <Link to="/admin/doctors" className="block px-3 py-2 rounded-md hover:bg-slate-50">Doctors List</Link>
-            </nav>
-          </div>
-        </aside>
-
-        <main className="col-span-12 md:col-span-9">
+        <main className="col-span-12">
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl font-semibold">Add Doctor</h1>
-            <button
-              onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-full"
-            >
-              Logout
-            </button>
           </div>
           <div className="bg-white border border-slate-200 rounded-xl p-6 max-w-xl">
             <form onSubmit={submit}>
@@ -231,7 +227,7 @@ export default function AdminAddDoctor() {
 
           <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md">Create Doctor</button>
         </form>
-      </div>
+          </div>
         </main>
       </div>
     </div>

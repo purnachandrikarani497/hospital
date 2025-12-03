@@ -41,34 +41,31 @@ export default function AdminPendingDoctors() {
 
 return (
   <div className="max-w-7xl mx-auto mt-8 px-4">
+    <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center gap-3">
+        <Link to="/admin/dashboard" className="flex items-center gap-2 text-indigo-700">
+          <Logo size={24} />
+          <span className="font-semibold">HospoZen</span>
+        </Link>
+        <nav className="flex items-center gap-6 ml-6 text-slate-700">
+          <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
+          <Link to="/admin/appointments" className="nav-link">Appointments</Link>
+          <Link to="/admin/add-doctor" className="nav-link">Add Doctor</Link>
+          <Link to="/admin/doctors/pending" className="nav-link text-indigo-700 font-semibold">Approvals</Link>
+          <Link to="/admin/doctors" className="nav-link">Doctors List</Link>
+        </nav>
+      </div>
+      <button
+        onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
+        className="btn-gradient"
+      >
+        Logout
+      </button>
+    </div>
     <div className="grid grid-cols-12 gap-6">
-      <aside className="col-span-12 md:col-span-3">
-        <div className="glass-card p-4 animate-fade-in">
-          <div className="mb-4">
-            <div className="flex items-center gap-2 text-indigo-700 font-semibold">
-              <Logo size={24} />
-              <span>HospoZen</span>
-            </div>
-          </div>
-          <nav className="space-y-2 text-slate-700">
-            <Link to="/admin/dashboard" className="block px-3 py-2 rounded-md hover:bg-slate-50">Dashboard</Link>
-            <Link to="/admin/appointments" className="block px-3 py-2 rounded-md hover:bg-slate-50">Appointments</Link>
-            <Link to="/admin/add-doctor" className="block px-3 py-2 rounded-md hover:bg-slate-50">Add Doctor</Link>
-            <div className="px-3 py-2 rounded-md bg-indigo-50 text-indigo-700">Approvals</div>
-            <Link to="/admin/doctors" className="block px-3 py-2 rounded-md hover:bg-slate-50">Doctors List</Link>
-          </nav>
-        </div>
-      </aside>
-
-      <main className="col-span-12 md:col-span-9 animate-fade-in">
+      <main className="col-span-12 animate-fade-in">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-3xl font-semibold">Pending Doctor Approvals</h2>
-          <button
-            onClick={() => { localStorage.removeItem("token"); nav("/admin/login"); }}
-            className="btn-gradient"
-          >
-            Logout
-          </button>
         </div>
         {error && <p className="text-red-600 mb-3">{error}</p>}
         {loading && <p className="text-slate-600">Loading...</p>}
