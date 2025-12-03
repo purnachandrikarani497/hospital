@@ -47,7 +47,7 @@ function Header() {
   const uid = localStorage.getItem('userId');
   const photo = uid ? localStorage.getItem(`userPhotoBase64ById_${uid}`) : '';
   const userName = uid ? localStorage.getItem(`userNameById_${uid}`) || '' : '';
-  const showAdminLink = !token && !location.pathname.startsWith('/login');
+  const showAdminLink = false; // Hide admin button as login is unified
   useEffect(() => {
     (async () => {
       try {
@@ -336,9 +336,9 @@ return (
 <Route path="/" element={<Home />} />
 <Route path="/about" element={<About />} />
 <Route path="/contact" element={<Contact />} />
-<Route path="/admin/login" element={<AdminLogin />} />
+<Route path="/admin/login" element={<Navigate to="/login" />} />
 <Route path="/login" element={<Login />} />
-<Route path="/doctor/login" element={<DoctorLogin />} />
+<Route path="/doctor/login" element={<Navigate to="/login" />} />
 <Route path="/register" element={<Register />} />
 <Route path="/search" element={<SearchDoctors />} />
         <Route path="/doctor/:id" element={<DoctorDetails />} />
@@ -350,7 +350,7 @@ return (
         <Route path="/doctor/profile" element={<DoctorProfile />} />
         <Route path="/prescription/:id" element={<Prescription />} />
         <Route path="/admin/doctors/pending" element={<AdminPendingDoctors />} />
-        <Route path="/admin" element={<AdminLogin />} />
+        <Route path="/admin" element={<Navigate to="/login" />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route path="/admin/appointments" element={<AdminAppointments />} />
         <Route path="/admin/add-doctor" element={<AdminAddDoctor />} />
