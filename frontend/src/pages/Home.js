@@ -75,36 +75,6 @@ export default function Home() {
   }, []);
   return (
     <div className="min-h-screen bg-white">
-      <section className="bg-indigo-600/90">
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="bg-indigo-500 rounded-2xl p-8 text-white shadow-lg">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <h1 className="text-3xl md:text-4xl font-bold leading-tight">Book Appointment<br/>With Trusted Doctors</h1>
-                <p className="mt-3 text-indigo-100">Browse from a selection of verified doctors, schedule your appointment with ease.</p>
-                <div className="mt-6 flex items-center gap-4">
-                  <div className="flex -space-x-2">
-                    <span className="inline-block w-9 h-9 rounded-full ring-2 ring-white bg-white/20" />
-                    <span className="inline-block w-9 h-9 rounded-full ring-2 ring-white bg-white/30" />
-                    <span className="inline-block w-9 h-9 rounded-full ring-2 ring-white bg-white/40" />
-                  </div>
-                  <Link to="/search" className="bg-white text-indigo-700 font-medium px-4 py-2 rounded-full hover:bg-indigo-50">Book Appointment</Link>
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <img
-                  src={heroSrc}
-                  alt="Doctors"
-                  className="h-56 md:h-64 w-full object-cover rounded-xl shadow-md"
-                  onError={() => {
-                    if (heroSrc !== FALLBACK) setHeroSrc(FALLBACK);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       
 
@@ -184,30 +154,6 @@ export default function Home() {
 
       <section>
         <div className="hidden" aria-hidden="true" />
-      </section>
-      <section>
-        <div className="max-w-7xl mx-auto px-4 py-10">
-          <div className="bg-indigo-500 rounded-2xl p-8 text-white shadow-lg">
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <h2 className="text-3xl md:text-4xl font-bold leading-tight">Book Appointment<br/>With 100+ Trusted Doctors</h2>
-                <div className="mt-6">
-                  <Link to="/register" className="inline-block bg-white text-indigo-700 font-medium px-4 py-2 rounded-full hover:bg-indigo-50">Create account</Link>
-                </div>
-              </div>
-              <div className="hidden md:block">
-                <img
-                  src={heroSrc}
-                  alt="Doctor"
-                  className="h-56 md:h-64 w-full object-cover rounded-xl shadow-md"
-                  onError={() => {
-                    if (heroSrc !== FALLBACK) setHeroSrc(FALLBACK);
-                  }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
       </section>
 
       <section>
