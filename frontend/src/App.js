@@ -173,12 +173,12 @@ function Header() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
       <div className="max-w-7xl mx-auto px-6 relative">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Enhanced Logo Section */}
           <Link to="/" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
-            <div className="w-12 h-12 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
               <div className="text-white">
-                <Logo size={24} />
+                <Logo size={20} />
               </div>
             </div>
             <div className="flex flex-col">
