@@ -32,6 +32,7 @@ export default function SearchDoctors() {
   const nav = useNavigate();
   const [q, setQ] = useState("");
   const [list, setList] = useState([]);
+  const [ratingById, setRatingById] = useState({});
   const [specialization, setSpecialization] = useState("");
   const [error, setError] = useState("");
   const CARD_FALLBACK = "";
@@ -82,6 +83,27 @@ export default function SearchDoctors() {
       }
 
       setList(items);
+      try {
+        const ids = items.map((d) => String(d?.user?._id || '')).filter(Boolean);
+        if (ids.length) {
+          const pairs = await Promise.all(ids.map(async (did) => {
+            try {
+              const res = await API.get(`/doctors/${did}/rating`);
+              const avg = Number(res?.data?.average || 0) || 0;
+              const rounded = Math.round(avg);
+              const count = Number(res?.data?.count || 0) || 0;
+              return [did, { avg: rounded, count }];
+            } catch (_) {
+              return [did, { avg: 0, count: 0 }];
+            }
+          }));
+          setRatingById(Object.fromEntries(pairs));
+        } else {
+          setRatingById({});
+        }
+      } catch (_) {
+        setRatingById({});
+      }
     } catch (e) {
       setList([]);
       setError(e.response?.data?.message || e.message || "Network Error");
@@ -284,6 +306,14 @@ export default function SearchDoctors() {
                     </div>
                     <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                       <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
+                      {(() => { const did = String(d.user?._id || ''); const info = ratingById[did]; const s = info?.avg || 0; const c = info?.count || 0; if (!s || !c) return null; return (
+                        <div className="mb-2 flex items-center gap-1">
+                          {[1,2,3,4,5].map((n) => (
+                            <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                          ))}
+                          <span className="text-sm text-slate-600">({c})</span>
+                        </div>
+                      ); })()}
                       <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
                       {typeof d.consultationFees === 'number' && (
                         <div className="text-sm text-slate-600 font-semibold mb-3">Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
@@ -293,7 +323,7 @@ export default function SearchDoctors() {
                       </Link>
                     </div>
                   </div>
-              ))}
+                ))}
               </div>
             </div>
           </div>
@@ -373,6 +403,14 @@ export default function SearchDoctors() {
                   </div>
                   <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                     <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
+                    {(() => { const did = String(d.user?._id || ''); const info = ratingById[did]; const s = info?.avg || 0; const c = info?.count || 0; if (!s || !c) return null; return (
+                      <div className="mb-2 flex items-center gap-1">
+                        {[1,2,3,4,5].map((n) => (
+                          <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        ))}
+                        <span className="text-sm text-slate-600">({c})</span>
+                      </div>
+                    ); })()}
                     <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
                     {typeof d.consultationFees === 'number' && (
                       <div className="text-sm text-slate-600 font-semibold mb-3">Consultation Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>

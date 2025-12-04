@@ -1573,17 +1573,26 @@ export default function Appointments() {
                     try {
                       const exists = Number(localStorage.getItem(`${key}_stars`) || 0) > 0;
                       if (exists) { alert('You have already rated this appointment.'); setRateAppt(null); return; }
-                      localStorage.setItem(`${key}_stars`, String(rateStars || 0));
-                      localStorage.setItem(`${key}_comment`, String(rateText || ''));
-                      alert('Thanks for your rating');
+                      if (!rateStars || rateStars < 1) { alert('Please select stars'); return; }
+                      API.put(`/appointments/${String(rateAppt._id || rateAppt.id)}/rate`, { stars: rateStars, text: rateText })
+                        .then(() => {
+                          try {
+                            localStorage.setItem(`${key}_stars`, String(rateStars || 0));
+                            localStorage.setItem(`${key}_comment`, String(rateText || ''));
+                          } catch(_) {}
+                          alert('Thanks for your rating');
+                          setRateAppt(null);
+                        })
+                        .catch((e) => {
+                          alert(e.response?.data?.message || e.message || 'Failed to submit rating');
+                        });
                     } catch(_) {}
-                    setRateAppt(null);
                   }}
                   className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   Submit
                 </button>
-                <div className="text-xs text-slate-600">Your rating is saved on this device.</div>
+                <div className="text-xs text-slate-600">Your rating helps improve doctor profiles.</div>
               </div>
             </div>
           </div>

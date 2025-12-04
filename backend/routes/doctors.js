@@ -3,6 +3,7 @@ const router = express.Router();
 const DoctorProfile = require('../models/DoctorProfile');
 const User = require('../models/User');
 const { authenticate } = require('../middlewares/auth');
+const Appointment = require('../models/Appointment');
 
 
 // Public: search doctors
@@ -61,6 +62,29 @@ router.put('/me/status', authenticate, async (req, res) => {
     if (io) io.emit('doctor:status', { doctorId: String(user._id), isOnline: !!profile.isOnline, isBusy: !!profile.isBusy });
   } catch (e) {}
   res.json({ isOnline: profile.isOnline, isBusy: profile.isBusy });
+});
+
+// Public: get doctor rating summary
+router.get('/:id/rating', async (req, res) => {
+  const { id } = req.params;
+  if (!id) return res.status(400).json({ message: 'id required' });
+  const docsFilter = { doctor: id, ratingStars: { $gte: 1 } };
+  try {
+    const stats = await Appointment.aggregate([
+      { $match: { doctor: require('mongoose').Types.ObjectId(id), ratingStars: { $gte: 1 } } },
+      { $group: { _id: '$doctor', count: { $sum: 1 }, avg: { $avg: '$ratingStars' } } }
+    ]);
+    const count = stats[0]?.count || 0;
+    const avg = stats[0]?.avg ? Number(stats[0].avg.toFixed(1)) : 0;
+    res.json({ average: avg, count });
+  } catch (_) {
+    // Fallback without aggregate ObjectId conversion
+    const list = await Appointment.find(docsFilter).select('ratingStars');
+    const count = list.length;
+    const sum = list.reduce((p, c) => p + (Number(c.ratingStars || 0) || 0), 0);
+    const avg = count ? Number((sum / count).toFixed(1)) : 0;
+    res.json({ average: avg, count });
+  }
 });
 
 

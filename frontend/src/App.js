@@ -43,6 +43,19 @@ function Header() {
   const [panelItems, setPanelItems] = useState([]);
   const [panelLoading, setPanelLoading] = useState(false);
   const [panelUnread, setPanelUnread] = useState(0);
+  const fancyLog = (title, subtitle, theme) => {
+    try {
+      const t1 = `background:${theme?.bg || '#f3f4f6'}; color:${theme?.fg || '#111827'}; padding:6px 10px; border-radius:12px; font-weight:700;`;
+      const t2 = `color:${theme?.fg || '#111827'}; padding:2px 0;`;
+      console.log(`%c${title}%c ${subtitle || ''}`, t1, t2);
+    } catch(_) {}
+  };
+  const themes = {
+    profile: { bg: 'linear-gradient(90deg,#eef2ff,#e0e7ff)', fg: '#3730a3' },
+    appts: { bg: 'linear-gradient(90deg,#fdf4ff,#fae8ff)', fg: '#7e22ce' },
+    rx: { bg: 'linear-gradient(90deg,#ecfeff,#cffafe)', fg: '#0e7490' },
+    signout: { bg: 'linear-gradient(90deg,#fee2e2,#fecaca)', fg: '#b91c1c' }
+  };
   const hideHeader = (() => {
     const p = location.pathname;
     if (p.startsWith('/admin')) return true;
@@ -290,6 +303,7 @@ function Header() {
                   <button
                     onClick={async () => {
                       try {
+                        fancyLog('Notifications', 'Panel toggled', { bg: 'linear-gradient(90deg,#dbeafe,#ede9fe)', fg: '#1d4ed8' });
                         setPanelOpen(!panelOpen);
                         if (!panelOpen) {
                           setPanelLoading(true);
@@ -429,68 +443,104 @@ function Header() {
 
                 {/* Enhanced User Dropdown */}
                 {open && (
-                  <div className="absolute right-0 top-16 w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-200/50 z-50">
-                    <div className="absolute right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/50 rotate-45"></div>
-                    <div className="p-6 border-b border-blue-200/50">
-                      <div className="flex items-center space-x-4">
+                  <div className="absolute right-0 top-16 w-80 bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl border border-blue-200/60 z-50 overflow-hidden">
+                    <div className="relative h-24 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600">
+                      <div className="absolute inset-0 bg-white/10 mix-blend-overlay"></div>
+                      <div className="absolute right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/60 rotate-45"></div>
+                      <div className="absolute left-6 -bottom-8 w-28 h-28 rounded-2xl shadow-xl border-4 border-white/70 overflow-hidden">
                         {photo ? (
-                          <img src={photo} alt="Profile" className="w-14 h-14 rounded-2xl object-cover border-2 border-blue-200" />
+                          <img src={photo} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-2xl flex items-center justify-center font-bold border-2 border-white">
+                          <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 text-white flex items-center justify-center font-bold">
                             {(userName || '').charAt(0).toUpperCase() || 'U'}
                           </div>
                         )}
-                        <div>
-                          <p className="font-bold text-gray-900 text-lg">{userName || 'User'}</p>
-                          <p className="text-sm text-blue-600 font-medium">Patient Account</p>
-                        </div>
                       </div>
                     </div>
-                    <div className="py-3">
+                    <div className="pt-10 px-6 pb-4 border-b border-blue-200/50">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="text-2xl font-extrabold bg-gradient-to-r from-slate-900 to-indigo-700 bg-clip-text text-transparent">{userName || 'User'}</div>
+                          <div className="inline-flex items-center text-xs px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-100 mt-2">Patient Account</div>
+                        </div>
+                        <button
+                          onClick={() => setOpen(false)}
+                          className="text-slate-500 hover:text-slate-900 transition"
+                        >
+                          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+                        </button>
+                      </div>
+                    </div>
+                    <div className="p-2">
                       <Link
                         to="/profile"
-                        className="flex items-center px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mx-2"
-                        onClick={() => setOpen(false)}
+                        className="group flex items-center justify-between px-6 py-3 rounded-2xl mx-2 hover:bg-blue-50 transition-all"
+                        onClick={() => { fancyLog('My Profile', 'Manage account & details', themes.profile); setOpen(false); }}
                       >
-                        <svg className="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                        <span className="font-medium">My Profile</span>
+                        <div className="flex items-center">
+                          <div>
+                            <div className="font-semibold text-slate-900">My Profile</div>
+                            <div className="relative mt-1">
+                              <span className="text-xs text-slate-500">Manage account & details</span>
+                              <span className="block h-0.5 w-10 bg-gradient-to-r from-indigo-500 to-blue-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-slate-400 group-hover:text-indigo-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </Link>
                       <Link
                         to="/appointments"
-                        className="flex items-center px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mx-2"
-                        onClick={() => setOpen(false)}
+                        className="group flex items-center justify-between px-6 py-3 rounded-2xl mx-2 hover:bg-blue-50 transition-all"
+                        onClick={() => { fancyLog('My Appointments', 'View, join, and manage', themes.appts); setOpen(false); }}
                       >
-                        <svg className="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10a2 2 0 002 2h4a2 2 0 002-2V11M9 11h6" />
-                        </svg>
-                        <span className="font-medium">My Appointments</span>
+                        <div className="flex items-center">
+                          <div>
+                            <div className="font-semibold text-slate-900">My Appointments</div>
+                            <div className="relative mt-1">
+                              <span className="text-xs text-slate-500">View, join, and manage</span>
+                              <span className="block h-0.5 w-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-slate-400 group-hover:text-purple-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </Link>
                       <Link
                         to="/appointments?view=prescriptions"
-                        className="flex items-center px-6 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-all duration-200 rounded-xl mx-2"
-                        onClick={() => setOpen(false)}
+                        className="group flex items-center justify-between px-6 py-3 rounded-2xl mx-2 hover:bg-blue-50 transition-all"
+                        onClick={() => { fancyLog('Prescriptions', 'Access and share Rx', themes.rx); setOpen(false); }}
                       >
-                        <svg className="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                        </svg>
-                        <span className="font-medium">Prescriptions</span>
+                        <div className="flex items-center">
+                          <div>
+                            <div className="font-semibold text-slate-900">Prescriptions</div>
+                            <div className="relative mt-1">
+                              <span className="text-xs text-slate-500">Access and share Rx</span>
+                              <span className="block h-0.5 w-10 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
+                            </div>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-slate-400 group-hover:text-cyan-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </Link>
-                      <hr className="my-3 border-blue-200/50" />
+                      <div className="px-6 py-3">
+                        <div className="h-px bg-gradient-to-r from-transparent via-blue-200/60 to-transparent"></div>
+                      </div>
                       <button
                         onClick={() => {
+                          fancyLog('Sign Out', 'Securely end session', themes.signout);
                           localStorage.removeItem('token');
                           localStorage.removeItem('userId');
                           nav('/login');
                           setOpen(false);
                         }}
-                        className="flex items-center w-full px-6 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-all duration-200 rounded-xl mx-2"
+                        className="group flex items-center justify-between w-full px-6 py-3 rounded-2xl mx-2 hover:bg-red-50 transition-all text-red-600"
                       >
-                        <svg className="w-5 h-5 mr-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                        <span className="font-medium">Sign Out</span>
+                        <div>
+                          <div className="font-semibold">Sign Out</div>
+                          <div className="relative mt-1">
+                            <span className="text-xs text-red-500">Securely end session</span>
+                            <span className="block h-0.5 w-10 bg-gradient-to-r from-red-500 to-pink-500 rounded-full group-hover:w-16 transition-all duration-300"></span>
+                          </div>
+                        </div>
+                        <svg className="w-4 h-4 text-red-400 group-hover:text-red-600 transition" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 5l7 7-7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                       </button>
                     </div>
                   </div>

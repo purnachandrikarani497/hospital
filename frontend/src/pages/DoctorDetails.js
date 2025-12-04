@@ -16,6 +16,8 @@ export default function DoctorDetails() {
   const [consultMode, setConsultMode] = useState('video');
   const [myBooked, setMyBooked] = useState([]);
   const [myStars, setMyStars] = useState(0);
+  const [ratingAvg, setRatingAvg] = useState(0);
+  const [ratingCount, setRatingCount] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const nav = useNavigate();
   const isLoggedIn = !!localStorage.getItem("token");
@@ -27,6 +29,19 @@ export default function DoctorDetails() {
 
   useEffect(() => {
     API.get(`/doctors`, { params: { user: id } }).then((res) => setDoctor(res.data[0]));
+  }, [id]);
+
+  useEffect(() => {
+    if (!id) return;
+    API.get(`/doctors/${id}/rating`).then((res) => {
+      const avg = Number(res?.data?.average || 0) || 0;
+      const count = Number(res?.data?.count || 0) || 0;
+      setRatingAvg(avg);
+      setRatingCount(count);
+    }).catch(() => {
+      setRatingAvg(0);
+      setRatingCount(0);
+    });
   }, [id]);
 
   const name = doctor?.user?.name || "";
@@ -213,6 +228,14 @@ export default function DoctorDetails() {
           <div className="md:col-span-2">
             <div className="flex items-center gap-2">
               <h2 className="text-3xl font-semibold">{`Dr. ${name}`}</h2>
+              {ratingCount > 0 && (
+                <div className="ml-2 flex items-center gap-1">
+                  {[1,2,3,4,5].map((n) => (
+                    <svg key={n} className={`w-5 h-5 ${ratingAvg>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                  ))}
+                  <span className="text-sm text-slate-600">({ratingCount})</span>
+                </div>
+              )}
             </div>
             <div className="mt-1 text-slate-700">{[specList, experienceYears].filter(Boolean).join(" • ")}</div>
             <div className="mt-3 flex flex-wrap gap-2">

@@ -265,6 +265,21 @@ router.post("/:id/prescription", authenticate, async (req, res) => {
   res.json({ ok: true });
 });
 
+// Patient rates the appointment/doctor
+router.put('/:id/rate', authenticate, async (req, res) => {
+  const { id } = req.params;
+  const { stars, text } = req.body || {};
+  const appt = await Appointment.findById(id);
+  if (!appt) return res.status(404).json({ message: 'Appointment not found' });
+  if (String(appt.patient) !== String(req.user._id)) return res.status(403).json({ message: 'Only the patient can rate' });
+  if (typeof stars !== 'number' || stars < 1 || stars > 5) return res.status(400).json({ message: 'stars must be 1-5' });
+  appt.ratingStars = Math.round(stars);
+  appt.ratingText = typeof text === 'string' ? text : appt.ratingText;
+  appt.ratedAt = new Date();
+  await appt.save();
+  res.json({ ok: true });
+});
+
 // Patient adds or updates details for online consultation
 router.put("/:id/patient-details", authenticate, async (req, res) => {
   const { id } = req.params;

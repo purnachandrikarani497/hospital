@@ -129,6 +129,27 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const ids = (list || []).map((d) => String(d.user?._id || '')).filter(Boolean);
+    if (!ids.length) return;
+    (async () => {
+      try {
+        const pairs = await Promise.all(ids.map(async (did) => {
+          try {
+            const res = await API.get(`/doctors/${did}/rating`);
+            const avg = Number(res?.data?.average || 0) || 0;
+            const rounded = Math.round(avg);
+            return [did, rounded];
+          } catch (_) {
+            return [did, 0];
+          }
+        }));
+        const map = Object.fromEntries(pairs);
+        setRatings((prev) => ({ ...prev, ...map }));
+      } catch (_) {}
+    })();
+  }, [list]);
+
+  useEffect(() => {
     const iv = setInterval(async () => {
       try {
         const { data } = await API.get('/doctors');
