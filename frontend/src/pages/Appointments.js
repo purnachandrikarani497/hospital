@@ -587,10 +587,11 @@ export default function Appointments() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 mt-8">
+    <div className="page-gradient">
+      <div className="max-w-7xl mx-auto px-4 pt-12 md:pt-16 animate-fade-in">
       
-      <h1 className="text-2xl font-semibold mb-4">{isPrescriptionsView ? 'Prescriptions' : 'My appointments'}</h1>
-      <div className="bg-white border border-slate-200 rounded-xl">
+      <h1 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent mb-4">{isPrescriptionsView ? 'Prescriptions' : 'My appointments'}</h1>
+      <div className="glass-card rounded-2xl animate-slide-in-left">
         {loading ? (
           <div className="p-4 text-slate-600">Loading...</div>
         ) : error ? (
@@ -600,7 +601,7 @@ export default function Appointments() {
         ) : (
           <div className="divide-y">
             {(isPrescriptionsView ? presItems : list).map((a) => (
-              <div key={a._id} className="p-4 flex items-center justify-between">
+              <div key={a._id} className="p-4 md:p-5 flex items-center justify-between card-hover">
                 <div className="flex items-center gap-4">
                   {(() => {
                     try {
@@ -1561,6 +1562,7 @@ export default function Appointments() {
         </div>
       )}
 
+      </div>
     </div>
   );
 }
