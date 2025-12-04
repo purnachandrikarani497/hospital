@@ -43,12 +43,57 @@ function Header() {
   const [panelItems, setPanelItems] = useState([]);
   const [panelLoading, setPanelLoading] = useState(false);
   const [panelUnread, setPanelUnread] = useState(0);
-  const hideHeader = location.pathname.startsWith('/admin') || location.pathname.startsWith('/doctor') || location.pathname.startsWith('/prescription');
+  const hideHeader = (() => {
+    const p = location.pathname;
+    if (p.startsWith('/admin')) return true;
+    if (p.startsWith('/prescription')) return true;
+    if (p.startsWith('/doctor/dashboard')) return true;
+    if (p.startsWith('/doctor/appointments')) return true;
+    if (p.startsWith('/doctor/profile')) return true;
+    return false;
+  })();
   const token = localStorage.getItem('token');
   const uid = localStorage.getItem('userId');
   const photo = uid ? localStorage.getItem(`userPhotoBase64ById_${uid}`) : '';
   const userName = uid ? localStorage.getItem(`userNameById_${uid}`) || '' : '';
   const showAdminLink = false; // Hide admin button as login is unified
+  const timeAgo = (ts) => {
+    try {
+      const d = new Date(ts).getTime();
+      const diff = Math.max(0, Date.now() - d);
+      const m = Math.floor(diff / 60000);
+      if (m < 1) return 'just now';
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      const days = Math.floor(h / 24);
+      return `${days}d ago`;
+    } catch(_) { return ''; }
+  };
+  const TypeIcon = ({ type }) => {
+    const c = 'w-5 h-5';
+    if (type === 'chat') return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 5a3 3 0 013-3h10a3 3 0 013 3v9a3 3 0 01-3 3H9l-5 4V5z" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    );
+    if (type === 'meet') return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M3 7a3 3 0 013-3h8a3 3 0 013 3v10a3 3 0 01-3 3H6a3 3 0 01-3-3V7z" stroke="#7C3AED" strokeWidth="2"/>
+        <path d="M21 10l-4 3 4 3V10z" fill="#7C3AED"/>
+      </svg>
+    );
+    if (type === 'appointment') return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M7 2v3m10-3v3M3 8h18M5 6h14a2 2 0 012 2v11a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2z" stroke="#059669" strokeWidth="2" strokeLinecap="round"/>
+      </svg>
+    );
+    return (
+      <svg className={c} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7zm0 20a3 3 0 003-3H9a3 3 0 003 3z" fill="#F59E0B"/>
+      </svg>
+    );
+  };
   useEffect(() => {
     (async () => {
       try {
@@ -260,10 +305,11 @@ function Header() {
                         setPanelLoading(false);
                       }
                     }}
-                    className="p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300"
+                    className="p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300 relative"
                   >
-                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM15 7V4a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2h2m0 4h.01" />
+                    <svg className={`w-6 h-6 ${bell > 0 ? 'animate-bounce' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 22a2 2 0 002-2H10a2 2 0 002 2z" fill="#2563EB"/>
+                      <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7z" stroke="#2563EB" strokeWidth="2" fill="none"/>
                     </svg>
                     {bell > 0 && (
                       <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
@@ -275,10 +321,35 @@ function Header() {
                   {/* Enhanced Notification Panel */}
                   {panelOpen && (
                     <div className="absolute right-0 top-16 w-96 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-200/50 z-50">
+                      <div className="absolute right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/50 rotate-45"></div>
                       <div className="p-6 border-b border-blue-200/50">
                         <div className="flex items-center justify-between">
                           <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Notifications</h3>
-                          <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium">{panelUnread} new</span>
+                          <div className="flex items-center gap-2">
+                            <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium">{panelUnread} new</span>
+                            <button
+                              onClick={async () => {
+                                try {
+                                  const ids = panelItems.filter((x) => !x.read).map((x) => x._id || x.id);
+                                  await Promise.all(ids.map((id) => API.put(`/notifications/${id}/read`).catch(() => {})));
+                                  setPanelItems((prev) => prev.map((x) => ({ ...x, read: true })));
+                                  setPanelUnread(0);
+                                  setBell(0);
+                                } catch(_) {}
+                              }}
+                              className="text-xs px-2 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50"
+                            >
+                              Mark all read
+                            </button>
+                            <button
+                              onClick={async () => {
+                                try { await API.delete('/notifications'); setPanelItems([]); setPanelUnread(0); setBell(0); } catch(_) {}
+                              }}
+                              className="text-xs px-2 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                            >
+                              Clear all
+                            </button>
+                          </div>
                         </div>
                       </div>
                       <div className="max-h-96 overflow-y-auto">
@@ -321,8 +392,13 @@ function Header() {
                                   }}
                                   className="flex-1 text-left"
                                 >
-                                  <p className="text-sm text-gray-900 font-medium">{n.message}</p>
-                                  <p className="text-xs text-gray-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
+                                  <div className="flex items-start gap-3">
+                                    <TypeIcon type={n.type} />
+                                    <div className="flex-1">
+                                      <p className="text-sm text-gray-900 font-medium">{n.message}</p>
+                                      <p className="text-xs text-gray-500 mt-1">{timeAgo(n.createdAt)}</p>
+                                    </div>
+                                  </div>
                                 </button>
                                 {!n.read && <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>}
                               </div>
@@ -354,6 +430,7 @@ function Header() {
                 {/* Enhanced User Dropdown */}
                 {open && (
                   <div className="absolute right-0 top-16 w-72 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-200/50 z-50">
+                    <div className="absolute right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/50 rotate-45"></div>
                     <div className="p-6 border-b border-blue-200/50">
                       <div className="flex items-center space-x-4">
                         {photo ? (

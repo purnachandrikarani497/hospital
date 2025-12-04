@@ -15,6 +15,7 @@ export default function DoctorDetails() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [consultMode, setConsultMode] = useState('video');
   const [myBooked, setMyBooked] = useState([]);
+  const [myStars, setMyStars] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const nav = useNavigate();
   const isLoggedIn = !!localStorage.getItem("token");
@@ -44,6 +45,34 @@ export default function DoctorDetails() {
     return localStorage.getItem(`doctorOnlineById_${uidD}`) === '1';
   })();
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !doctor) return;
+    (async () => {
+      try {
+        const { data } = await API.get('/appointments/mine');
+        const did = String(doctor?.user?._id || '');
+        const stars = [];
+        (data || []).forEach((a) => {
+          const aid = String(a._id || a.id || '');
+          const dA = String(a.doctor?._id || a.doctor || '');
+          if (!aid || dA !== did) return;
+          try {
+            const s = Number(localStorage.getItem(`rate_${aid}_stars`) || 0) || 0;
+            if (s > 0) stars.push(s);
+          } catch(_) {}
+        });
+        if (stars.length) {
+          const avg = Math.round(stars.reduce((p, c) => p + c, 0) / stars.length);
+          setMyStars(Math.max(1, Math.min(5, avg)));
+        } else {
+          setMyStars(0);
+        }
+      } catch(_) {
+        setMyStars(0);
+      }
+    })();
+  }, [doctor]);
   useEffect(() => {
     if (!doctor) return;
     const primary = (doctor.specializations && doctor.specializations[0]) || undefined;
@@ -149,115 +178,72 @@ export default function DoctorDetails() {
             </div>
           </div>
         </header>
-      ) : (
-        <header className="navbar animate-fade-in">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="flex items-center justify-between h-16">
-              <Link to="/" className="flex items-center gap-2 text-indigo-700">
-                <Logo size={24} />
-                <span className="text-lg font-semibold">HospoZen</span>
-              </Link>
-              <div className="flex items-center gap-6">
-                <nav className="flex items-center gap-6">
-                  {(() => {
-                    const p = location.pathname;
-                    const linkCls = (active) => active ? "nav-link text-indigo-700 font-semibold" : "nav-link";
-                    return (
-                      <>
-                        <Link to="/" className={linkCls(p === "/")}>Home</Link>
-                        <Link to="/search" className={linkCls(p.startsWith("/search"))}>All Doctors</Link>
-                        <Link to="/about" className={linkCls(p.startsWith("/about"))}>About</Link>
-                        <Link to="/contact" className={linkCls(p.startsWith("/contact"))}>Contact</Link>
-                      </>
-                    );
-                  })()}
-                </nav>
-                {token ? (
-                  <div className="relative">
-                    {photo ? (
-                      <img
-                        src={photo}
-                        alt="User"
-                        className="h-9 w-9 rounded-full object-cover border border-slate-300 cursor-pointer"
-                        onClick={() => setMenuOpen((v) => !v)}
-                      />
-                    ) : (
-                      <div
-                        className="h-9 w-9 rounded-full border border-slate-300 bg-white cursor-pointer"
-                        onClick={() => setMenuOpen((v) => !v)}
-                      />
-                    )}
-                    {menuOpen && (
-                      <div className="absolute right-0 mt-2 w-44 glass-card shadow-2xl text-sm">
-                        <Link to="/profile" className="block px-3 py-2 nav-link">My Profile</Link>
-                        <Link to="/appointments" className="block px-3 py-2 nav-link">My Appointments</Link>
-                        <Link to="/prescriptions" className="block px-3 py-2 nav-link">Prescriptions</Link>
-                        <button
-                          onClick={() => { localStorage.removeItem('token'); localStorage.removeItem('userId'); nav('/login'); }}
-                          className="block w-full text-left px-3 py-2 nav-link"
-                        >
-                          Logout
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <Link to="/register" className="btn-gradient">Create Account</Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </header>
-      )}
-      <div className="max-w-7xl mx-auto px-4 mt-8">
-      <div className="glass-card p-6 animate-fade-in">
+      ) : null}
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
+      <h2 className="text-4xl font-extrabold mb-2 text-center bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent animate-slide-in-right">Doctor Profile</h2>
+      <p className="text-center text-slate-600 mb-8 animate-fade-in" style={{ animationDelay: '0.15s', animationFillMode: 'forwards' }}>Compassionate care, seamless booking, and secure consultations.</p>
+      <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6 animate-slide-in-left opacity-0" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>
         <div className="grid md:grid-cols-3 gap-6 items-start">
           <div>
-            <div className="bg-indigo-50 rounded-xl overflow-hidden border border-indigo-100">
+            <div className="rounded-2xl overflow-hidden border border-white/30">
               <div className="relative">
                 {String(doctor?.photoBase64 || "").startsWith("data:image") ? (
                   <img
                     src={doctor?.photoBase64}
                     alt="Doctor"
-                    className="w-full h-64 object-cover transform hover:scale-110 transition-transform duration-700"
+                    className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700"
                   />
                 ) : (
-                  <div className="w-full h-64 bg-white" />
+                  <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center">
+                    <div className="text-6xl text-slate-400">👨‍⚕️</div>
+                  </div>
                 )}
+                {(() => {
+                  const uid = doctor?.user?._id;
+                  const online = typeof doctor?.isOnline === 'boolean' ? !!doctor?.isOnline : (localStorage.getItem(`doctorOnlineById_${uid}`) === '1');
+                  const busy = typeof doctor?.isBusy === 'boolean' ? !!doctor?.isBusy : (localStorage.getItem(`doctorBusyById_${uid}`) === '1');
+                  const cls = busy ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white' : (online ? 'bg-gradient-to-r from-green-400 to-emerald-500 text-white' : 'bg-gradient-to-r from-red-400 to-pink-500 text-white');
+                  const txt = busy ? 'Busy' : (online ? 'Online' : 'Offline');
+                  return <span className={`absolute top-3 right-3 inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg ${cls}`}>{txt}</span>;
+                })()}
               </div>
             </div>
           </div>
           <div className="md:col-span-2">
             <div className="flex items-center gap-2">
               <h2 className="text-3xl font-semibold">{`Dr. ${name}`}</h2>
-              {(() => {
-                const uid = doctor?.user?._id;
-                const isOnline = typeof doctor?.isOnline === 'boolean' ? !!doctor?.isOnline : (localStorage.getItem(`doctorOnlineById_${uid}`) === '1');
-                const isBusy = typeof doctor?.isBusy === 'boolean' ? !!doctor?.isBusy : (localStorage.getItem(`doctorBusyById_${uid}`) === '1');
-                return (
-                  <span className={`badge ${isBusy ? 'badge-busy' : (isOnline ? 'badge-online' : 'badge-offline')}`}>{isBusy ? 'Busy' : (isOnline ? 'Online' : 'Offline')}</span>
-                );
-              })()}
             </div>
             <div className="mt-1 text-slate-700">{[specList, experienceYears].filter(Boolean).join(" • ")}</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {specList && <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">{specList}</span>}
+              {experienceYears && <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">{experienceYears}</span>}
+            </div>
             <div className="mt-4">
               <div className="font-semibold">About</div>
               <p className="text-slate-700 text-sm mt-1">{about}</p>
             </div>
             {fee !== "" && (<div className="mt-4 text-slate-700">Appointment fee: ₹{fee}</div>)}
+            {myStars > 0 && (
+              <div className="mt-4 flex items-center gap-1 text-amber-500">
+                {[1,2,3,4,5].map((n) => (
+                  <svg key={n} className={`w-5 h-5 ${myStars>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {!isAdminRoute && (
       <div className="mt-8">
-        <div className="glass-card p-6 animate-fade-in">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl border border-white/20 shadow-2xl p-6 animate-slide-in-left opacity-0" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
           <div className="text-slate-900 font-semibold mb-4">Booking slots</div>
           <div className="flex items-center gap-4 mb-4">
             <select
               value={type}
               onChange={(e) => setType(e.target.value === 'online' ? 'online' : 'offline')}
-              className="input-elevated text-sm"
+              className="w-full max-w-xs p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
             >
               <option value="offline">Clinic/Hospital Visit</option>
               <option value="online">Online Consultation</option>
@@ -266,7 +252,7 @@ export default function DoctorDetails() {
               <select
                 value={consultMode}
                 onChange={(e) => setConsultMode(e.target.value)}
-                className="input-elevated text-sm"
+                className="w-full max-w-xs p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300"
               >
                 <option value="video">Video call</option>
                 <option value="audio">Audio call</option>
@@ -289,7 +275,7 @@ export default function DoctorDetails() {
                     key={val}
                     onClick={() => { if (!disabledToday) setSelectedDate(val); }}
                     disabled={disabledToday}
-                    className={`px-4 py-3 rounded-full border card-hover ${isSel ? "bg-indigo-600 text-white border-indigo-600" : disabledToday ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300"}`}
+                    className={`px-4 py-3 rounded-full border ${isSel ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-600" : disabledToday ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300 hover:scale-105 transition"}`}
                   >
                     <div className="text-xs">{label}</div>
                     <div className="text-base">{day}</div>
@@ -328,7 +314,7 @@ export default function DoctorDetails() {
                     key={key}
                     onClick={() => { if (!disabled) setSelectedSlot(s); }}
                     disabled={disabled}
-                    className={`px-4 py-2 rounded-full border flex items-center gap-2 card-hover ${sel ? "bg-indigo-600 text-white border-indigo-600" : disabled ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300"}`}
+                    className={`px-4 py-2 rounded-full border flex items-center gap-2 ${sel ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-600" : disabled ? "bg-white text-slate-400 border-slate-200 cursor-not-allowed" : "bg-white text-slate-900 border-slate-300 hover:scale-105 transition"}`}
                   >
                     <span>{s.start} - {s.end}</span>
                     {isMine && (
@@ -418,7 +404,7 @@ export default function DoctorDetails() {
               alert(err.response?.data?.message || err.message);
             }
             }}
-            className="btn-gradient w-full md:w-auto"
+            className="inline-flex items-center justify-center w-full md:w-auto py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
           >
             {isLoggedIn ? "Book an appointment" : "Login to book"}
           </button>
@@ -430,20 +416,20 @@ export default function DoctorDetails() {
       <div className="mt-8">
         <h3 className="text-2xl font-semibold text-slate-900 text-center">Related Doctors</h3>
         <p className="text-slate-600 text-center mt-2">Simply browse through our extensive list of trusted doctors.</p>
-        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {related.map((d) => (
-            <div key={d._id} className="glass-card overflow-hidden card-hover">
+            <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500">
               <div className="relative">
                 {String(d.photoBase64 || "").startsWith("data:image") ? (
                   <img
                     src={d.photoBase64}
                     alt="Doctor"
-                    className="w-full h-56 object-cover transform hover:scale-110 transition-transform duration-700"
+                    className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700"
                   />
                 ) : (
-                  <div className="w-full h-56 bg-gradient-to-br from-slate-100 to-slate-200" />
+                  <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200" />
                 )}
-                <span className="absolute top-3 left-3 badge badge-online">Available</span>
+                <span className="absolute top-3 left-3 inline-block text-xs px-3 py-2 rounded-full font-semibold shadow-lg bg-gradient-to-r from-green-400 to-emerald-500 text-white">Available</span>
               </div>
               <div className="p-4">
                 <div className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</div>
@@ -457,40 +443,45 @@ export default function DoctorDetails() {
 
       {!isAdminRoute && (
       <section className="mt-8 animate-fade-in">
-        <div className="max-w-7xl mx-auto px-4 py-12 glass-card">
+        <div className="max-w-7xl mx-auto px-4 py-12 bg-gradient-to-br from-white/90 to-indigo-50 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl">
           <div className="grid md:grid-cols-3 gap-8 items-start">
-            <div>
-              <div className="flex items-center gap-2 text-indigo-700 font-semibold text-lg">
-                <Logo size={24} />
-                <span>HospoZen</span>
+            <div className="animate-slide-in-left">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg border-2 border-white/20">
+                  <div className="text-white">
+                    <Logo size={20} />
+                  </div>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">HospoZen</span>
+                  <span className="text-xs text-blue-600 font-medium tracking-wider uppercase">Healthcare Platform</span>
+                </div>
               </div>
-              <p className="mt-3 text-slate-600 text-sm">
-                Lorem Ipsum is simply dummy text of the printing and typesetting industry.
-                It has been the industry's standard dummy text ever since the 1500s.
+              <p className="text-slate-700 text-sm leading-relaxed">
+                Your trusted healthcare companion. Connecting patients with verified medical professionals for seamless healthcare experiences.
               </p>
             </div>
             <div>
-              <div className="font-semibold text-slate-900 mb-2">COMPANY</div>
-              <div className="space-y-1 text-slate-700 text-sm">
-                <Link to="/" className="hover:text-indigo-700">Home</Link>
-                <div>
-                  <Link to="/about" className="hover:text-indigo-700">About us</Link>
-                </div>
-                <div className="text-slate-700">Delivery</div>
-                <div className="text-slate-700">Privacy policy</div>
+              <div className="font-semibold text-slate-900 mb-2 uppercase tracking-wide">Company</div>
+              <div className="flex flex-col space-y-2 text-slate-700 text-sm">
+                <Link to="/" className="hover:text-indigo-700 block">Home</Link>
+                <Link to="/search" className="hover:text-indigo-700 block">Find Doctors</Link>
+                <Link to="/about" className="hover:text-indigo-700 block">About us</Link>
+                <Link to="/contact" className="hover:text-indigo-700 block">Contact</Link>
               </div>
             </div>
             <div>
-              <div className="font-semibold text-slate-900 mb-2">GET IN TOUCH</div>
-              <div className="text-slate-700 text-sm">+0-000-000-000</div>
-              <div className="text-slate-700 text-sm">greatstackdev@gmail.com</div>
+              <div className="font-semibold text-slate-900 mb-2 uppercase tracking-wide">Get in touch</div>
+              <div className="flex items-center gap-2 text-slate-700 text-sm"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M2 3h5l2 5-3 2a16 16 0 008 8l2-3 5 2v5a2 2 0 01-2 2h-1C9.163 24 0 14.837 0 3V2a2 2 0 012-2h0z"/></svg> +0-000-000-000</div>
+              <div className="flex items-center gap-2 text-slate-700 text-sm"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M4 4h16v16H4z"/><path strokeWidth="2" d="M22 6l-10 7L2 6"/></svg> greatstackdev@gmail.com</div>
             </div>
           </div>
           <hr className="my-6 border-slate-200" />
-          <div className="text-center text-slate-600 text-sm">Copyright 2024 © GreatStack.dev - All Right Reserved.</div>
+          <div className="text-center text-slate-600 text-sm">© 2024 HospoZen. All rights reserved. | Powered by Innovation</div>
         </div>
       </section>
       )}
+      </div>
       </div>
     </>
   );
