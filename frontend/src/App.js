@@ -254,6 +254,7 @@ function Header() {
                           const unread = items.filter((x) => !x.read).length;
                           setPanelUnread(unread);
                           setBell(unread);
+                          setPanelLoading(false);
                         }
                       } catch (_) {
                         setPanelLoading(false);
@@ -296,10 +297,33 @@ function Header() {
                           panelItems.map((n) => (
                             <div key={n._id || n.id} className="p-4 border-b border-gray-100 hover:bg-blue-50/50 transition-colors duration-200">
                               <div className="flex items-start justify-between">
-                                <div className="flex-1">
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const id = String(n.apptId || '');
+                                      if (id) {
+                                        try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                                        nav('/appointments?alertChat=1');
+                                      } else if (n.type === 'meet' && n.apptId) {
+                                        const mid = String(n.apptId || '');
+                                        if (mid) nav(`/appointments?joinMeet=${mid}`);
+                                      } else if (n.type === 'appointment') {
+                                        nav('/appointments');
+                                      } else if (n.link) {
+                                        nav(n.link);
+                                      }
+                                      setPanelOpen(false);
+                                      try { await API.put(`/notifications/${n._id || n.id}/read`); } catch(_) {}
+                                      setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x)));
+                                      setPanelUnread((c) => Math.max(0, c - 1));
+                                      setBell((c) => Math.max(0, c - 1));
+                                    } catch(_) {}
+                                  }}
+                                  className="flex-1 text-left"
+                                >
                                   <p className="text-sm text-gray-900 font-medium">{n.message}</p>
                                   <p className="text-xs text-gray-500 mt-1">{new Date(n.createdAt).toLocaleString()}</p>
-                                </div>
+                                </button>
                                 {!n.read && <div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>}
                               </div>
                             </div>

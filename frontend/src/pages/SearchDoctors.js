@@ -201,7 +201,7 @@ export default function SearchDoctors() {
                   </div>
                   <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                     <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                    <p className="text-sm text-indigo-600 font-medium mb-2">{(d.specializations && d.specializations[0]) || ""}</p>
+                    <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
                     {typeof d.consultationFees === 'number' && (
                       <div className="text-sm text-slate-600 font-semibold mb-3">Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
                     )}
@@ -289,7 +289,7 @@ export default function SearchDoctors() {
                   </div>
                   <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                     <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                    <p className="text-sm text-indigo-600 font-medium mb-2">{(d.specializations && d.specializations[0]) || ""}</p>
+                    <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
                     {typeof d.consultationFees === 'number' && (
                       <div className="text-sm text-slate-600 font-semibold mb-3">Consultation Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
                     )}

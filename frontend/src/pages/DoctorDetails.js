@@ -29,7 +29,12 @@ export default function DoctorDetails() {
   }, [id]);
 
   const name = doctor?.user?.name || "";
-  const specPrimary = doctor?.specializations?.[0] || "";
+  const specList = (() => {
+    const s = doctor?.specializations;
+    if (Array.isArray(s)) return s.join(", ");
+    if (typeof s === "string") return s;
+    return "";
+  })();
   const experienceYears = doctor?.experienceYears ? `${doctor?.experienceYears} Years` : undefined;
   const about = doctor?.about || "";
   const fee = doctor?.consultationFees ?? "";
@@ -234,7 +239,7 @@ export default function DoctorDetails() {
                 );
               })()}
             </div>
-            <div className="mt-1 text-slate-700">{[specPrimary, experienceYears].filter(Boolean).join(" • ")}</div>
+            <div className="mt-1 text-slate-700">{[specList, experienceYears].filter(Boolean).join(" • ")}</div>
             <div className="mt-4">
               <div className="font-semibold">About</div>
               <p className="text-slate-700 text-sm mt-1">{about}</p>
@@ -442,7 +447,7 @@ export default function DoctorDetails() {
               </div>
               <div className="p-4">
                 <div className="text-base font-semibold">{`Dr. ${d.user?.name || ''}`}</div>
-                <div className="text-sm text-slate-600">{(d.specializations && d.specializations[0]) || ""}</div>
+                <div className="text-sm text-slate-600">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</div>
               </div>
             </div>
           ))}

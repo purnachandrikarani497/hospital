@@ -267,7 +267,7 @@ export default function Home() {
                   </div>
                   <div className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900">{`Dr. ${d.user?.name || ''}`}</h3>
-                    <p className="text-gray-600 text-sm mt-1">{(d.specializations && d.specializations[0]) || ""}</p>
+                    <p className="text-gray-600 text-sm mt-1">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
                     <div className="mt-4">
                       <Link to={`/doctor/${d.user._id}`} className="btn-gradient inline-flex items-center justify-center w-full text-sm font-medium">View Profile</Link>
                     </div>

@@ -39,14 +39,7 @@ export default function About() {
               </ul>
             </div>
           </div>
-          <div className="hidden md:block">
-            <img
-              src={(process.env.PUBLIC_URL || "") + "/doctor1.jpeg"}
-              alt="Team"
-              className="rounded-2xl shadow-2xl animate-zoom-in"
-              onError={(e) => { e.currentTarget.src = "https://raw.githubusercontent.com/abhi051002/hms-fullstack/main/frontend/src/readme_images/about.png"; }}
-            />
-          </div>
+          
         </div>
       </section>
     </div>
