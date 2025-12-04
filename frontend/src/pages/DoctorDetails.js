@@ -15,6 +15,7 @@ export default function DoctorDetails() {
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [consultMode, setConsultMode] = useState('video');
   const [myBooked, setMyBooked] = useState([]);
+  const [myStars, setMyStars] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
   const nav = useNavigate();
   const isLoggedIn = !!localStorage.getItem("token");
@@ -44,6 +45,34 @@ export default function DoctorDetails() {
     return localStorage.getItem(`doctorOnlineById_${uidD}`) === '1';
   })();
 
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token || !doctor) return;
+    (async () => {
+      try {
+        const { data } = await API.get('/appointments/mine');
+        const did = String(doctor?.user?._id || '');
+        const stars = [];
+        (data || []).forEach((a) => {
+          const aid = String(a._id || a.id || '');
+          const dA = String(a.doctor?._id || a.doctor || '');
+          if (!aid || dA !== did) return;
+          try {
+            const s = Number(localStorage.getItem(`rate_${aid}_stars`) || 0) || 0;
+            if (s > 0) stars.push(s);
+          } catch(_) {}
+        });
+        if (stars.length) {
+          const avg = Math.round(stars.reduce((p, c) => p + c, 0) / stars.length);
+          setMyStars(Math.max(1, Math.min(5, avg)));
+        } else {
+          setMyStars(0);
+        }
+      } catch(_) {
+        setMyStars(0);
+      }
+    })();
+  }, [doctor]);
   useEffect(() => {
     if (!doctor) return;
     const primary = (doctor.specializations && doctor.specializations[0]) || undefined;
@@ -195,11 +224,13 @@ export default function DoctorDetails() {
               <p className="text-slate-700 text-sm mt-1">{about}</p>
             </div>
             {fee !== "" && (<div className="mt-4 text-slate-700">Appointment fee: ₹{fee}</div>)}
-            <div className="mt-4 flex items-center gap-2 text-amber-500">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <svg key={i} className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-              ))}
-            </div>
+            {myStars > 0 && (
+              <div className="mt-4 flex items-center gap-1 text-amber-500">
+                {[1,2,3,4,5].map((n) => (
+                  <svg key={n} className={`w-5 h-5 ${myStars>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -690,21 +690,29 @@ export default function Appointments() {
                       >
                         Book Again
                       </button>
-                      <button
-                        onClick={() => {
-                          setRateAppt(a);
-                          const key = `rate_${String(a._id || a.id)}`;
-                          try {
-                            const stars = Number(localStorage.getItem(`${key}_stars`) || 0) || 0;
-                            const text = String(localStorage.getItem(`${key}_comment`) || '') || '';
-                            setRateStars(stars);
-                            setRateText(text);
-                          } catch(_) { setRateStars(0); setRateText(''); }
-                        }}
-                        className="border border-green-600 text-green-700 px-3 py-1 rounded-md"
-                      >
-                        Rate Doctor
-                      </button>
+                      {(() => {
+                        const key = `rate_${String(a._id || a.id || '')}`;
+                        let rated = false;
+                        try { rated = Number(localStorage.getItem(`${key}_stars`) || 0) > 0; } catch(_) {}
+                        return (
+                          <button
+                            onClick={() => {
+                              if (rated) return;
+                              setRateAppt(a);
+                              try {
+                                const stars = Number(localStorage.getItem(`${key}_stars`) || 0) || 0;
+                                const text = String(localStorage.getItem(`${key}_comment`) || '') || '';
+                                setRateStars(stars);
+                                setRateText(text);
+                              } catch(_) { setRateStars(0); setRateText(''); }
+                            }}
+                            disabled={rated}
+                            className={`border px-3 py-1 rounded-md ${rated ? 'border-slate-300 text-slate-400 cursor-not-allowed' : 'border-green-600 text-green-700'}`}
+                          >
+                            {rated ? 'Rated' : 'Rate Doctor'}
+                          </button>
+                        );
+                      })()}
                     </div>
                   ) : String(a.status).toUpperCase() === 'JOINED' ? (
                     <div className="flex flex-wrap gap-2 items-center">
@@ -1563,6 +1571,8 @@ export default function Appointments() {
                   onClick={() => {
                     const key = `rate_${String(rateAppt._id || rateAppt.id)}`;
                     try {
+                      const exists = Number(localStorage.getItem(`${key}_stars`) || 0) > 0;
+                      if (exists) { alert('You have already rated this appointment.'); setRateAppt(null); return; }
                       localStorage.setItem(`${key}_stars`, String(rateStars || 0));
                       localStorage.setItem(`${key}_comment`, String(rateText || ''));
                       alert('Thanks for your rating');

@@ -10,6 +10,7 @@ export default function Home() {
   const [heroSrc, setHeroSrc] = useState(FALLBACK);
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
+  const [ratings, setRatings] = useState({});
   const didInit = useRef(false);
 
   const iconMap = {
@@ -103,6 +104,27 @@ export default function Home() {
         setList([]);
         setError(e.response?.data?.message || e.message || "Network Error");
       }
+    })();
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    (async () => {
+      try {
+        const { data } = await API.get('/appointments/mine');
+        const map = {};
+        (data || []).forEach((a) => {
+          const id = String(a._id || a.id || '');
+          const did = String(a.doctor?._id || a.doctor || '');
+          if (!id || !did) return;
+          try {
+            const stars = Number(localStorage.getItem(`rate_${id}_stars`) || 0) || 0;
+            if (stars > 0) map[did] = stars;
+          } catch(_) {}
+        });
+        setRatings(map);
+      } catch(_) {}
     })();
   }, []);
 
@@ -268,6 +290,14 @@ export default function Home() {
                   <div className="p-6">
                     <h3 className="text-lg font-semibold text-gray-900">{`Dr. ${d.user?.name || ''}`}</h3>
                     <p className="text-gray-600 text-sm mt-1">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
+                    {d.experienceYears ? (<div className="text-xs text-gray-700 mt-1">{`${d.experienceYears} Years`}</div>) : null}
+                    {(() => { const did = String(d.user?._id || ''); const s = ratings[did] || 0; if (!s) return null; return (
+                      <div className="mt-2 flex items-center gap-1 text-amber-500">
+                        {[1,2,3,4,5].map((n) => (
+                          <svg key={n} className={`w-4 h-4 ${s>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                        ))}
+                      </div>
+                    ); })()}
                     <div className="mt-4">
                       <Link to={`/doctor/${d.user._id}`} className="btn-gradient inline-flex items-center justify-center w-full text-sm font-medium">View Profile</Link>
                     </div>
