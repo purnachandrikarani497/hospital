@@ -646,7 +646,7 @@ export default function Appointments() {
                 </div>
                 <div className="flex gap-3 items-center">
                   {isPrescriptionsView ? (
-                    <button onClick={() => { try { const u = String(a.url || ''); const m = u.match(/\/prescription\/([^?]+)/); const id = m ? m[1] : ''; if (id) { setPresId(id); setPresOpen(true); } } catch(_) {} }} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Open</button>
+                    <button onClick={() => { try { const u = String(a.url || ''); if (u) nav(u); } catch(_) {} }} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Open</button>
                   ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Cancelled</span>
@@ -675,7 +675,7 @@ export default function Appointments() {
                       <button disabled className="border border-slate-200 text-slate-400 px-3 py-1 rounded-md cursor-not-allowed">Session Completed</button>
                       {a.prescriptionText && (
                         <button
-                          onClick={() => { const id = String(a._id || a.id || ''); if (id) { setPresId(id); setPresOpen(true); } }}
+                          onClick={() => { const id = String(a._id || a.id || ''); if (id) nav(`/prescription/${id}`); }}
                           className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
                         >
                           View Prescription
@@ -1114,77 +1114,79 @@ export default function Appointments() {
       )}
       {detailsAppt && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={(e) => { if (e.target === e.currentTarget) { setDetailsAppt(null); setIsFullPreview(false); setFilePreview(null); } }}>
-          <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-lg h-[75vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <div className="font-semibold text-slate-900">Patient Details</div>
-              <button onClick={() => { setDetailsAppt(null); setIsFullPreview(false); setFilePreview(null); try { nav('/appointments', { replace: true }); } catch(_) {} }} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
+          <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-blue-200/50 shadow-2xl w-[95vw] max-w-xl h-[80vh] overflow-hidden flex flex-col">
+            <div className="px-6 py-4 border-b border-blue-200/50 flex items-center justify-between">
+              <div className="text-xl font-extrabold bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">Patient Details</div>
+              <button onClick={() => { setDetailsAppt(null); setIsFullPreview(false); setFilePreview(null); try { nav('/appointments', { replace: true }); } catch(_) {} }} className="px-3 py-1 rounded-md bg-blue-600 hover:bg-blue-700 text-white">Close</button>
             </div>
-            <div className="p-4 grid gap-3 overflow-y-auto flex-1">
+            <div className="p-6 grid gap-4 overflow-y-auto flex-1">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="text-slate-900 font-semibold mb-1">Patient name</div>
-                  <div className="text-sm text-slate-700">{String(detailsAppt?.patient?.name || 'You')}</div>
+                  <div className="text-sm text-slate-900">{String(detailsAppt?.patient?.name || 'You')}</div>
                 </div>
                 <div>
                   <div className="text-slate-900 font-semibold mb-1">Age / Gender</div>
-                  <div className="text-sm text-slate-700">{(() => {
-                    try {
-                      const p = detailsAppt?.patient || {};
-                      const pid = String(p._id || localStorage.getItem('userId') || '');
-                      let ageStr = '';
-                      if (p.age !== undefined && p.age !== null && String(p.age).trim() !== '') {
-                        ageStr = String(p.age);
-                      } else {
-                        const locAge = pid ? localStorage.getItem(`userAgeById_${pid}`) || '' : '';
-                        if (locAge) {
-                          ageStr = String(locAge);
+                  <div className="inline-flex items-center gap-2">
+                    <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">{(() => {
+                      try {
+                        const p = detailsAppt?.patient || {};
+                        const pid = String(p._id || localStorage.getItem('userId') || '');
+                        let ageStr = '';
+                        if (p.age !== undefined && p.age !== null && String(p.age).trim() !== '') {
+                          ageStr = String(p.age);
                         } else {
-                          const dob = p.birthday || p.dob || p.dateOfBirth || p.birthDate || (pid ? localStorage.getItem(`userDobById_${pid}`) || '' : '');
-                          if (dob) {
-                            const d = new Date(dob);
-                            if (!Number.isNaN(d.getTime())) {
-                              const t = new Date();
-                              let age = t.getFullYear() - d.getFullYear();
-                              const m = t.getMonth() - d.getMonth();
-                              if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
-                              ageStr = String(age);
+                          const locAge = pid ? localStorage.getItem(`userAgeById_${pid}`) || '' : '';
+                          if (locAge) {
+                            ageStr = String(locAge);
+                          } else {
+                            const dob = p.birthday || p.dob || p.dateOfBirth || p.birthDate || (pid ? localStorage.getItem(`userDobById_${pid}`) || '' : '');
+                            if (dob) {
+                              const d = new Date(dob);
+                              if (!Number.isNaN(d.getTime())) {
+                                const t = new Date();
+                                let age = t.getFullYear() - d.getFullYear();
+                                const m = t.getMonth() - d.getMonth();
+                                if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                                ageStr = String(age);
+                              }
                             }
                           }
                         }
-                      }
-                      const gender = p.gender || p.sex || (pid ? localStorage.getItem(`userGenderById_${pid}`) || '' : '');
-                      return [ageStr, gender].filter(Boolean).join(' / ') || '--';
-                    } catch(_) { return '--'; }
-                  })()}</div>
+                        return ageStr || '--';
+                      } catch(_) { return '--'; }
+                    })()}</span>
+                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">{(() => { try { const p = detailsAppt?.patient || {}; const pid = String(p._id || localStorage.getItem('userId') || ''); const gender = p.gender || p.sex || (pid ? localStorage.getItem(`userGenderById_${pid}`) || '' : ''); return gender || '--'; } catch(_) { return '--'; } })()}</span>
+                  </div>
                 </div>
               </div>
               <div>
                 <div className="flex items-center justify-between">
                   <div className="text-slate-900 font-semibold mb-1">Symptoms (reason for visit)</div>
-                  <button type="button" onClick={() => setDetEdit((v) => !v)} className="text-xs text-indigo-700">{detEdit ? 'View' : 'Edit'}</button>
+                  <button type="button" onClick={() => setDetEdit((v) => !v)} className="text-xs px-2 py-1 rounded-md border border-blue-200 text-blue-700 hover:bg-blue-50">{detEdit ? 'View' : 'Edit'}</button>
                 </div>
                 {detEdit ? (
-                  <textarea rows={3} value={detSymptoms} onChange={(e) => setDetSymptoms(e.target.value)} className="w-full border border-slate-300 rounded-md p-2 text-sm" placeholder="Describe your symptoms" />
+                  <textarea rows={3} value={detSymptoms} onChange={(e) => setDetSymptoms(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Describe your symptoms" />
                 ) : (
-                  <div className="text-sm text-slate-700 whitespace-pre-wrap">{String(detSymptoms || '').trim() || '--'}</div>
+                  <div className="text-sm text-slate-800 whitespace-pre-wrap bg-blue-50/50 rounded-xl p-3">{String(detSymptoms || '').trim() || '--'}</div>
                 )}
               </div>
               <div>
                 <div className="text-slate-900 font-semibold mb-1">Health issue summary</div>
                 {detEdit ? (
-                  <textarea rows={3} value={detSummary} onChange={(e) => setDetSummary(e.target.value)} className="w-full border border-slate-300 rounded-md p-2 text-sm" placeholder="Brief summary for doctor" />
+                  <textarea rows={3} value={detSummary} onChange={(e) => setDetSummary(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Brief summary for doctor" />
                 ) : (
-                  <div className="text-sm text-slate-700 whitespace-pre-wrap">{String(detSummary || '').trim() || '--'}</div>
+                  <div className="text-sm text-slate-800 whitespace-pre-wrap bg-blue-50/50 rounded-xl p-3">{String(detSummary || '').trim() || '--'}</div>
                 )}
               </div>
               <div>
                 <div className="text-slate-900 font-semibold mb-2">Pre-call chat</div>
-                <div className="h-28 overflow-y-auto border border-slate-200 rounded-md p-2 bg-slate-50">
+                <div className="h-28 overflow-y-auto border border-blue-200 rounded-xl p-3 bg-white/70">
                   {detChat.length === 0 ? (
-                    <div className="text-slate-600 text-sm">No messages</div>
+                    <div className="text-slate-500 text-sm">No messages</div>
                   ) : (
                     detChat.map((m, idx) => (
-                      <div key={idx} className="text-sm text-slate-700">{m}</div>
+                      <div key={idx} className="text-sm text-slate-800">{m}</div>
                     ))
                   )}
                 </div>
@@ -1193,7 +1195,7 @@ export default function Appointments() {
                     value={detText}
                     onChange={(e) => setDetText(e.target.value)}
                     placeholder="Type a quick message"
-                    className="flex-1 border border-slate-300 rounded-md px-3 py-2 text-sm"
+                    className="flex-1 border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
                   />
                   <button
                     onClick={() => {
@@ -1209,7 +1211,7 @@ export default function Appointments() {
                         setDetText("");
                       }
                     }}
-                    className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+                    className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     Send
                   </button>
@@ -1245,18 +1247,18 @@ export default function Appointments() {
                 />
                 <div className="mt-2 space-y-2">
                   {detPrevFiles.length === 0 ? (
-                    <div className="text-slate-600 text-sm">No reports uploaded</div>
+                    <div className="text-slate-500 text-sm">No reports uploaded</div>
                   ) : (
                     detPrevFiles.map((f, idx) => (
-                      <div key={idx} className="flex items-center justify-between border rounded-md p-2">
+                      <div key={idx} className="flex items-center justify-between border border-blue-200 rounded-xl p-3 bg-white/70">
                         <div className="flex items-center gap-3">
                           {(String(f.url || '').startsWith('data:image')) && (
                             <img src={f.url} alt={f.name} className="h-10 w-10 object-cover rounded" />
                           )}
-                          <div className="text-sm text-slate-700 truncate max-w-[12rem]">{f.name}</div>
+                          <div className="text-sm text-slate-800 truncate max-w-[12rem]">{f.name}</div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <button onClick={() => openFile(f.url)} className="px-2 py-1 rounded-md border border-slate-300 text-sm">Open</button>
+                          <button onClick={() => openFile(f.url)} className="px-2 py-1 rounded-md border border-blue-200 text-blue-700 text-sm">Open</button>
                           <button
                             onClick={() => {
                               const nextFiles = detPrevFiles.filter((_, i) => i !== idx);
@@ -1275,7 +1277,7 @@ export default function Appointments() {
                   )}
                 </div>
               </div>
-              <div className="flex gap-2 items-center sticky bottom-0 bg-white py-3">
+              <div className="flex gap-2 items-center sticky bottom-0 bg-white/95 backdrop-blur-md py-3 border-t border-blue-200/50">
                 <button
                   onClick={async () => {
                     try {
@@ -1319,7 +1321,7 @@ export default function Appointments() {
                       alert(e.response?.data?.message || e.message || 'Failed to save');
                     }
                   }}
-                  className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white"
                 >
                   Submit
                 </button>

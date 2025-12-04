@@ -71,12 +71,10 @@ export default function Prescription() {
   const clinicName = useMemo(() => String(profile?.clinic?.name || "").trim(), [profile]);
   const clinicCity = useMemo(() => String(profile?.clinic?.city || "").trim(), [profile]);
   const doctorName = useMemo(() => `Dr. ${appt?.doctor?.name || ''}`, [appt]);
-  const regNo = useMemo(() => String(profile?.registrationNumber || "").trim(), [profile]);
   const patientName = useMemo(() => String(appt?.patient?.name || "").trim(), [appt]);
   const when = useMemo(() => `${appt?.date || ''} ${appt?.startTime || ''}-${appt?.endTime || ''}`, [appt]);
   const doctorQuals = useMemo(() => (Array.isArray(profile?.qualifications) ? profile.qualifications.join(', ') : ''), [profile]);
   const doctorSpecs = useMemo(() => (Array.isArray(profile?.specializations) ? profile.specializations.join(', ') : ''), [profile]);
-  const clinicAddress = useMemo(() => String(profile?.clinic?.address || '').trim(), [profile]);
   const patientAge = useMemo(() => {
     try {
       const pid = String(appt?.patient?._id || appt?.patient || '');
@@ -153,27 +151,28 @@ export default function Prescription() {
   }, [appt]);
 
   return (
-    <div className="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-slate-200 mt-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-semibold">{clinicName || 'Clinic/Hospital'}</h2>
-      </div>
-      {!appt && <p className="text-slate-600 mt-3">Loading...</p>}
-      {appt && (
-        <div className="mt-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <div className="text-lg font-semibold text-slate-900">{clinicName || 'Clinic/Hospital'}</div>
-              <div className="text-slate-700 text-sm">{clinicCity}</div>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+      <div className="max-w-4xl mx-auto pt-8 px-4">
+        <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{clinicName || 'Clinic/Hospital'}</h2>
             <div className="text-right">
               <div className="text-slate-900 font-semibold">{doctorName}</div>
             </div>
           </div>
-          <hr className="my-3 border-slate-200" />
-          <div className="flex items-center justify-between text-sm text-slate-700">
-            <div>Patient: <span className="text-slate-900">{patientName || '--'}</span></div>
-            <div>Date: <span className="text-slate-900">{when}</span></div>
-          </div>
+          {appt ? (
+            <div className="mt-4">
+              <div className="flex items-start">
+                <div>
+                  <div className="text-lg font-semibold text-slate-900">{clinicName || 'Clinic/Hospital'}</div>
+                  <div className="text-slate-700 text-sm">{clinicCity}</div>
+                </div>
+              </div>
+              <div className="my-3 border-t border-blue-200/50" />
+              <div className="flex items-center justify-between text-sm text-slate-700">
+                <div>Patient: <span className="text-slate-900">{patientName || '--'}</span></div>
+                <div>Date: <span className="text-slate-900">{when}</span></div>
+              </div>
 
           <div className="mt-6 grid md:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -196,9 +195,9 @@ export default function Prescription() {
         <div className="mt-6">
           <div className="text-slate-900 font-semibold">Symptoms (Chief Complaints)</div>
           {edit ? (
-            <textarea rows={3} value={symptoms} onChange={(e) => setSymptoms(e.target.value)} className="w-full border border-slate-300 rounded-md p-3 text-sm mt-2" placeholder="Enter symptoms" />
+            <textarea rows={3} value={symptoms} onChange={(e) => setSymptoms(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm mt-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Enter symptoms" />
           ) : (
-            <div className="mt-2 text-sm text-slate-700 whitespace-pre-wrap border border-slate-300 rounded-md p-3 bg-slate-50">{symptomsText || '--'}</div>
+            <div className="mt-2 text-sm text-slate-800 whitespace-pre-wrap border border-blue-200 rounded-xl p-3 bg-blue-50/50">{symptomsText || '--'}</div>
           )}
         </div>
 
@@ -206,17 +205,17 @@ export default function Prescription() {
           <div>
             <div className="text-slate-900 font-semibold">Diagnosis</div>
             {edit ? (
-              <input value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm mt-2" placeholder="Enter diagnosis" />
+              <input value={diagnosis} onChange={(e) => setDiagnosis(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm mt-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Enter diagnosis" />
             ) : (
-              <div className="mt-2 text-sm text-slate-700 border border-slate-300 rounded-md p-3 bg-slate-50">{parsed.diagnosis || '--'}</div>
+              <div className="mt-2 text-sm text-slate-800 border border-blue-200 rounded-xl p-3 bg-blue-50/50">{parsed.diagnosis || '--'}</div>
             )}
           </div>
           <div>
             <div className="text-slate-900 font-semibold">Tests / Investigations</div>
             {edit ? (
-              <textarea rows={2} value={tests} onChange={(e) => setTests(e.target.value)} className="w-full border border-slate-300 rounded-md p-3 text-sm mt-2" placeholder="e.g., CBC, LFT" />
+              <textarea rows={2} value={tests} onChange={(e) => setTests(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm mt-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="e.g., CBC, LFT" />
             ) : (
-              <div className="mt-2 text-sm text-slate-700 border border-slate-300 rounded-md p-3 bg-slate-50">{parsed.tests || '--'}</div>
+              <div className="mt-2 text-sm text-slate-800 border border-blue-200 rounded-xl p-3 bg-blue-50/50">{parsed.tests || '--'}</div>
             )}
           </div>
         </div>
@@ -225,43 +224,43 @@ export default function Prescription() {
           <div className="text-slate-900 font-semibold">Prescription (Medicines)</div>
           {edit ? (
             <div className="grid md:grid-cols-2 gap-3 mt-2">
-              <input value={medicines} onChange={(e) => setMedicines(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Medicine name" />
-              <input value={dosage} onChange={(e) => setDosage(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Dosage" />
-              <input value={frequency} onChange={(e) => setFrequency(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Frequency" />
-              <input value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Duration" />
-              <input value={route} onChange={(e) => setRoute(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Route" />
-              <input value={food} onChange={(e) => setFood(e.target.value)} className="w-full border border-slate-300 rounded-md px-3 py-2 text-sm" placeholder="Before/After food" />
+              <input value={medicines} onChange={(e) => setMedicines(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Medicine name" />
+              <input value={dosage} onChange={(e) => setDosage(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Dosage" />
+              <input value={frequency} onChange={(e) => setFrequency(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Frequency" />
+              <input value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Duration" />
+              <input value={route} onChange={(e) => setRoute(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Route" />
+              <input value={food} onChange={(e) => setFood(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Before/After food" />
             </div>
           ) : (
             <div className="grid md:grid-cols-2 gap-3 mt-2">
-              <div className="text-sm text-slate-700">Medicine Name: <span className="text-slate-900">{parsed.medicines || '--'}</span></div>
-              <div className="text-sm text-slate-700">Dosage: <span className="text-slate-900">{parsed.dosage || '--'}</span></div>
-              <div className="text-sm text-slate-700">Frequency: <span className="text-slate-900">{parsed.frequency || '--'}</span></div>
-              <div className="text-sm text-slate-700">Duration: <span className="text-slate-900">{parsed.duration || '--'}</span></div>
-              <div className="text-sm text-slate-700">Route: <span className="text-slate-900">{parsed.route || '--'}</span></div>
-              <div className="text-sm text-slate-700">Before/After food: <span className="text-slate-900">{parsed.food || '--'}</span></div>
+              <div className="text-sm text-slate-800">Medicine Name: <span className="text-slate-900">{parsed.medicines || '--'}</span></div>
+              <div className="text-sm text-slate-800">Dosage: <span className="text-slate-900">{parsed.dosage || '--'}</span></div>
+              <div className="text-sm text-slate-800">Frequency: <span className="text-slate-900">{parsed.frequency || '--'}</span></div>
+              <div className="text-sm text-slate-800">Duration: <span className="text-slate-900">{parsed.duration || '--'}</span></div>
+              <div className="text-sm text-slate-800">Route: <span className="text-slate-900">{parsed.route || '--'}</span></div>
+              <div className="text-sm text-slate-800">Before/After food: <span className="text-slate-900">{parsed.food || '--'}</span></div>
             </div>
           )}
           {edit ? (
-            <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-slate-300 rounded-md p-3 text-sm mt-2" placeholder="Notes" />
+            <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm mt-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Notes" />
           ) : (
-            <div className="mt-2 text-sm text-slate-700">Notes: <span className="text-slate-900">{parsed.notes || '--'}</span></div>
+            <div className="mt-2 text-sm text-slate-800">Notes: <span className="text-slate-900">{parsed.notes || '--'}</span></div>
           )}
         </div>
 
         <div className="mt-6">
           <div className="text-slate-900 font-semibold">Advice / Instructions</div>
           {edit ? (
-            <textarea rows={2} value={advice} onChange={(e) => setAdvice(e.target.value)} className="w-full border border-slate-300 rounded-md p-3 text-sm mt-2" placeholder="Advice / Instructions" />
+            <textarea rows={2} value={advice} onChange={(e) => setAdvice(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm mt-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Advice / Instructions" />
           ) : (
-            <div className="mt-2 text-sm text-slate-700 border border-slate-300 rounded-md p-3 bg-slate-50">{parsed.advice || '--'}</div>
+            <div className="mt-2 text-sm text-slate-800 border border-blue-200 rounded-xl p-3 bg-blue-50/50">{parsed.advice || '--'}</div>
           )}
         </div>
 
         <div className="mt-6 grid md:grid-cols-2 gap-4">
           <div>
             <div className="text-slate-900 font-semibold">Follow-up</div>
-            <div className="mt-2 text-sm text-slate-700 border border-slate-300 rounded-md p-3 bg-slate-50">
+            <div className="mt-2 text-sm text-slate-800 border border-blue-200 rounded-xl p-3 bg-blue-50/50">
               <div>Follow-up date: <span className="text-slate-900">{followUpDate || '--'}</span></div>
               <div>Review if symptoms worsen</div>
             </div>
@@ -274,29 +273,10 @@ export default function Prescription() {
           </div>
         </div>
         
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <button
-            onClick={async () => {
-              const url = `${window.location.origin}/prescription/${id}`;
-              try { await navigator.clipboard.writeText(url); alert('Link copied for pharmacy'); } catch(_) {}
-            }}
-            className="px-3 py-2 rounded-md border border-slate-300"
-          >
-            Share to pharmacy
-          </button>
-          <button
-            onClick={async () => {
-              const url = `${window.location.origin}/prescription/${id}`;
-              try { await navigator.clipboard.writeText(url); alert('Link copied for lab'); } catch(_) {}
-            }}
-            className="px-3 py-2 rounded-md border border-slate-300"
-          >
-            Share for lab tests
-          </button>
-        </div>
+        
         <div className="mt-6 flex items-center justify-end gap-2">
           {isDoctorUser && (
-            <button onClick={() => setEdit((v) => !v)} className="px-3 py-2 rounded-md border border-slate-300">{edit ? 'Cancel Edit' : 'Edit'}</button>
+            <button onClick={() => setEdit((v) => !v)} className="px-3 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50">{edit ? 'Cancel Edit' : 'Edit'}</button>
           )}
           {edit && isDoctorUser && (
             <button
@@ -323,7 +303,7 @@ export default function Prescription() {
                   alert(e.response?.data?.message || e.message || 'Failed to update');
                 }
               }}
-              className="px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white"
+              className="px-4 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white"
             >
               Save
             </button>
@@ -338,11 +318,11 @@ export default function Prescription() {
                   } catch (_) {}
                   nav('/appointments');
                 }}
-                className="px-3 py-2 rounded-md border border-slate-300"
+                className="px-4 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50"
               >
                 Close
               </button>
-              <button onClick={() => { try { window.open(`/prescription/${id}?print=1`, '_blank'); } catch(_) {} }} className="px-3 py-2 rounded-md border border-slate-300">Download PDF</button>
+              <button onClick={() => { try { window.open(`/prescription/${id}?print=1`, '_blank'); } catch(_) {} }} className="px-4 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50">Download PDF</button>
               {isDoctorUser && (
                 <button
                   onClick={async () => {
@@ -366,7 +346,7 @@ export default function Prescription() {
                     } catch (_) {}
                     alert('Sent to Prescriptions')
                   }}
-                  className="px-3 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white"
                 >
                   Share
                 </button>
@@ -374,8 +354,12 @@ export default function Prescription() {
             </>
           )}
         </div>
+              </div>
+          ) : (
+            <p className="text-slate-600 mt-3">Loading...</p>
+          )}
+        </div>
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
 }

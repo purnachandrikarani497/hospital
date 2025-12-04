@@ -593,7 +593,7 @@ export default function DoctorToday() {
                 <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Completed</span>
                 <button
                   type="button"
-                  onClick={() => { const id = String(a._id || a.id || ''); if (id) { setSummaryId(id); setSummaryOpen(true); } }}
+                  onClick={() => { const id = String(a._id || a.id || ''); if (id) { nav(`/prescription/${id}`); } }}
                   className="px-3 py-1 rounded-md border border-indigo-600 text-indigo-700 hover:bg-indigo-50"
                 >
                   View Summary
