@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useParams, useLocation, useNavigate } from "react-router-dom";
 import API from "../api";
 
@@ -108,6 +108,7 @@ export default function Prescription() {
       return String(parts.slice(1).join(':') || '').trim();
     };
     const obj = {
+      complaint: getVal('Complaint'),
       medicines: getVal('Medicines'),
       dosage: getVal('Dosage'),
       duration: getVal('Duration'),
@@ -151,7 +152,7 @@ export default function Prescription() {
   }, [appt]);
 
   useEffect(() => {
-    setSymptoms(symptomsText || '');
+    setSymptoms(parsed.complaint || symptomsText || '');
     setDiagnosis(parsed.diagnosis || '');
     setTests(parsed.tests || '');
     setObservations(parsed.observations || '');
@@ -180,8 +181,42 @@ export default function Prescription() {
     } catch(_) { return false; }
   }, [appt]);
 
+  const pdfRef = useRef(null);
+
+  const downloadPdfDirect = async () => {
+    try {
+      const loadScript = (src) => new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = src; s.async = true;
+        s.onload = () => resolve();
+        s.onerror = (e) => reject(e);
+        document.body.appendChild(s);
+      });
+      const container = pdfRef.current && pdfRef.current.parentElement;
+      if (!pdfRef.current || !container) { alert('Preparing PDF failed'); return; }
+      const prev = container.style.display;
+      container.style.display = 'block';
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+      await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+      const canvas = await window.html2canvas(pdfRef.current, { scale: 2, useCORS: true, backgroundColor: '#ffffff' });
+      const imgData = canvas.toDataURL('image/png');
+      const { jsPDF } = window.jspdf || {};
+      if (!jsPDF) { throw new Error('PDF engine not available'); }
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pdfW = doc.internal.pageSize.getWidth();
+      const pdfH = pdfW * canvas.height / canvas.width;
+      doc.addImage(imgData, 'PNG', 0, 0, pdfW, pdfH);
+      const fname = `${(patientName || 'Prescription').replace(/[^a-z0-9_\- ]/gi, '')}-${String(appt?.date || '').replace(/[^0-9\-]/g, '') || ''}.pdf`;
+      doc.save(fname);
+      container.style.display = prev || 'none';
+    } catch (e) {
+      alert('Failed to download PDF');
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
+    <>
+    <div className="screen-only min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
       <div className="max-w-4xl mx-auto pt-8 px-4">
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6">
           <div className="flex items-center justify-between">
@@ -227,7 +262,7 @@ export default function Prescription() {
           {edit ? (
             <textarea rows={3} value={symptoms} onChange={(e) => setSymptoms(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm mt-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Enter complaint" />
           ) : (
-            <div className="mt-2 text-sm text-slate-800 whitespace-pre-wrap border border-blue-200 rounded-xl p-3 bg-blue-50/50">{symptomsText}</div>
+            <div className="mt-2 text-sm text-slate-800 whitespace-pre-wrap border border-blue-200 rounded-xl p-3 bg-blue-50/50">{parsed.complaint || symptomsText}</div>
           )}
         </div>
 
@@ -434,58 +469,58 @@ export default function Prescription() {
               >
                 Close
               </button>
-              <button onClick={() => { try { window.print(); } catch(_) {} }} className="px-4 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50">Download PDF</button>
+              <button onClick={downloadPdfDirect} className="px-4 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50">Download PDF</button>
               {isDoctorUser && (
-              <button
-                onClick={async () => {
-                  const key = String(id);
-                  const viewUrl = `${window.location.origin}/prescription/${id}`;
-                  const parts = [
-                    symptoms ? `Complaint: ${symptoms}` : '',
-                    observations ? `Observations: ${observations}` : '',
-                    diagnosis ? `Diagnosis: ${diagnosis}` : '',
-                    tests ? `Investigations Suggested: ${tests}` : '',
-                    medicines ? `Medicines: ${medicines}` : '',
-                    dosage ? `Dosage: ${dosage}` : '',
-                    duration ? `Duration: ${duration}` : '',
-                    route ? `Measure: ${route}` : '',
-                    food ? `Instructions: ${food}` : '',
-                    advice ? `Lifestyle advice: ${advice}` : '',
-                    notes ? `Remarks: ${notes}` : '',
-                    (Array.isArray(medRows) && medRows.length) ? `Medicines List: ${medRows.map((m) => {
-                      const items = [];
-                      if (m.name) items.push(m.name);
-                      const times = [m.morning ? 'Morning' : '', m.afternoon ? 'Afternoon' : '', m.night ? 'Night' : ''].filter(Boolean).join(', ');
-                      if (times) items.push(times);
-                      if (m.food) items.push(m.food);
-                      if (m.days) items.push(`${m.days} days`);
-                      return items.join(' | ');
-                    }).filter(Boolean).join('; ')}` : ''
-                  ].filter(Boolean);
-                  const text = parts.join('\n');
-                  try {
-                      const prev = JSON.parse(localStorage.getItem(`wr_${key}_prevpres`) || '[]');
-                      const label = `Prescription ${when}`;
-                      const item = { name: label, url: viewUrl, by: "doctor" };
-                      const next = Array.isArray(prev) ? [...prev, item] : [item];
-                      localStorage.setItem(`wr_${key}_prevpres`, JSON.stringify(next));
-                      try { const chan = new BroadcastChannel('prescriptions'); chan.postMessage({ id: key, item }); chan.close(); } catch (_) {}
-                    } catch (_) {}
-                    try { await API.post(`/appointments/${id}/prescription`, { text }); } catch (_) {}
+                <button
+                  onClick={async () => {
+                    const key = String(id);
+                    const viewUrl = `${window.location.origin}/prescription/${id}`;
+                    const parts = [
+                      symptoms ? `Complaint: ${symptoms}` : '',
+                      observations ? `Observations: ${observations}` : '',
+                      diagnosis ? `Diagnosis: ${diagnosis}` : '',
+                      tests ? `Investigations Suggested: ${tests}` : '',
+                      medicines ? `Medicines: ${medicines}` : '',
+                      dosage ? `Dosage: ${dosage}` : '',
+                      duration ? `Duration: ${duration}` : '',
+                      route ? `Measure: ${route}` : '',
+                      food ? `Instructions: ${food}` : '',
+                      advice ? `Lifestyle advice: ${advice}` : '',
+                      notes ? `Remarks: ${notes}` : '',
+                      (Array.isArray(medRows) && medRows.length) ? `Medicines List: ${medRows.map((m) => {
+                        const items = [];
+                        if (m.name) items.push(m.name);
+                        const times = [m.morning ? 'Morning' : '', m.afternoon ? 'Afternoon' : '', m.night ? 'Night' : ''].filter(Boolean).join(', ');
+                        if (times) items.push(times);
+                        if (m.food) items.push(m.food);
+                        if (m.days) items.push(`${m.days} days`);
+                        return items.join(' | ');
+                      }).filter(Boolean).join('; ')}` : ''
+                    ].filter(Boolean);
+                    const text = parts.join('\n');
                     try {
-                      if (navigator.share) {
-                        await navigator.share({ title: 'Prescription', url: viewUrl });
-                      } else {
-                        await navigator.clipboard.writeText(viewUrl);
-                      }
-                    } catch (_) {}
-                    alert('Sent to Prescriptions')
-                  }}
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white"
-                >
-                  Share
-                </button>
-              )}
+                        const prev = JSON.parse(localStorage.getItem(`wr_${key}_prevpres`) || '[]');
+                        const label = `Prescription ${when}`;
+                        const item = { name: label, url: viewUrl, by: "doctor" };
+                        const next = Array.isArray(prev) ? [...prev, item] : [item];
+                        localStorage.setItem(`wr_${key}_prevpres`, JSON.stringify(next));
+                        try { const chan = new BroadcastChannel('prescriptions'); chan.postMessage({ id: key, item }); chan.close(); } catch (_) {}
+                      } catch (_) {}
+                      try { await API.post(`/appointments/${id}/prescription`, { text }); } catch (_) {}
+                      try {
+                        if (navigator.share) {
+                          await navigator.share({ title: 'Prescription', url: viewUrl });
+                        } else {
+                          await navigator.clipboard.writeText(viewUrl);
+                        }
+                      } catch (_) {}
+                      alert('Sent to Prescriptions')
+                    }}
+                    className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white"
+                  >
+                    Share
+                  </button>
+                )}
             </>
           )}
         </div>
@@ -496,5 +531,70 @@ export default function Prescription() {
         </div>
       </div>
     </div>
+    <div className="print-only">
+      <div className="presc-a4" ref={pdfRef}>
+        <div className="presc-header">
+          <div className="presc-logo">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="1.5" fill="#e0f2fe"/>
+              <path d="M8 15c2 2 6 2 8-2M9 9h2M13 9h2" stroke="#2563eb" strokeWidth="1.5" strokeLinecap="round"/>
+            </svg>
+          </div>
+          <div className="presc-title">
+            <div className="presc-doc-name">{doctorName || 'Dr. Doctor Name'}</div>
+            <div className="presc-qual">{doctorQuals || 'Qualification'}</div>
+          </div>
+          <div className="presc-hospital-box">
+            <div className="presc-hospital">{clinicName || 'Hospital'}</div>
+            <div className="presc-slogan">{clinicCity || ''}</div>
+          </div>
+        </div>
+        <div className="presc-details">
+          <div className="presc-line"><span>Patient Name:</span><span>{patientName || ''}</span></div>
+          <div className="presc-line"><span>Address:</span><span>{String(profile?.clinic?.address || '').trim()}</span></div>
+          <div className="presc-row">
+            <div className="presc-line presc-half"><span>Age:</span><span>{patientAge || ''}</span></div>
+            <div className="presc-line presc-half"><span>Date:</span><span>{appt?.date || ''}</span></div>
+          </div>
+          <div className="presc-line"><span>Diagnosis:</span><span>{parsed.diagnosis || ''}</span></div>
+        </div>
+        <div className="presc-rx">Medicine</div>
+        <table className="presc-table">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Morning</th>
+              <th>Afternoon</th>
+              <th>Night</th>
+              <th>Food</th>
+              <th>Days</th>
+            </tr>
+          </thead>
+          <tbody>
+            {medRows.map((m, i) => (
+              <tr key={i}>
+                <td>{m.name}</td>
+                <td>{m.morning ? '✓' : ''}</td>
+                <td>{m.afternoon ? '✓' : ''}</td>
+                <td>{m.night ? '✓' : ''}</td>
+                <td>{m.food}</td>
+                <td>{m.days}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {parsed.advice && (
+          <div className="presc-notes">
+            <div className="presc-line"><span>Advice:</span><span>{parsed.advice}</span></div>
+          </div>
+        )}
+        <div className="presc-footer">
+          <div>{String(profile?.clinic?.address || '').trim() || ''}</div>
+          <div></div>
+        </div>
+        <div className="presc-wave" />
+      </div>
+    </div>
+    </>
   );
 }
