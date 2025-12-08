@@ -748,7 +748,7 @@ export default function DoctorDashboard() {
   return (
     <div className="max-w-7xl mx-auto px-4 pt-16 page-gradient">
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
-        <div className="max-w-7xl mx-auto px-6 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
@@ -758,7 +758,7 @@ export default function DoctorDashboard() {
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
                     HospoZen
                   </span>
                 </div>
@@ -785,7 +785,7 @@ export default function DoctorDashboard() {
                 );
               })()}
             </nav>
-            <div className="relative flex items-center gap-3">
+            <div className="relative flex items-center gap-2 sm:gap-3">
               {(() => {
                 const isOnline = !!online && !busy;
                 const isOffline = !online;
@@ -823,7 +823,7 @@ export default function DoctorDashboard() {
                     }
                   } catch (_) { setPanelLoading(false); }
                 }}
-                className="p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300 relative"
+                className="inline-flex p-2 sm:p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300 relative"
                 title="Notifications"
               >
                 <svg className={`w-6 h-6 ${bellCount > 0 ? 'animate-bounce' : ''}`} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -831,18 +831,27 @@ export default function DoctorDashboard() {
                   <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7z" stroke="#2563EB" strokeWidth="2" fill="none"/>
                 </svg>
                 {bellCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
+                  <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
                     {bellCount > 9 ? '9+' : bellCount}
                   </span>
                 )}
               </button>
+              <button
+                className="lg:hidden p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                title="Menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               {panelOpen && (
-                <div className="absolute right-0 top-16 w-96 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-200/50 z-50">
-                  <div className="absolute right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/50 rotate-45"></div>
-                  <div className="p-6 border-b border-blue-200/50">
-                    <div className="flex items-center justify-between">
+                <div className="fixed sm:absolute left-3 right-3 sm:left-auto sm:right-0 top-16 sm:top-16 w-auto sm:w-96 max-w-[calc(100vw-1.5rem)] bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-blue-200/50 z-50">
+                  <div className="absolute right-3 sm:right-6 -top-2 w-4 h-4 bg-white/95 border border-blue-200/50 rotate-45"></div>
+                  <div className="p-4 sm:p-6 border-b border-blue-200/50">
+                    <div className="flex items-start sm:items-center justify-between gap-3">
                       <h3 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Notifications</h3>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <span className="bg-blue-100 text-blue-700 text-sm px-3 py-1 rounded-full font-medium">{panelUnread} new</span>
                         <button
                           onClick={async () => {
@@ -869,7 +878,7 @@ export default function DoctorDashboard() {
                       </div>
                     </div>
                   </div>
-                  <div className="max-h-96 overflow-y-auto">
+                  <div className="max-h-[65vh] sm:max-h-96 overflow-y-auto">
                     {panelLoading ? (
                       <div className="p-8 text-center">
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -938,7 +947,7 @@ export default function DoctorDashboard() {
                   localStorage.removeItem("token");
                   nav("/doctor/login");
                 }}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
+                className="hidden sm:inline-flex bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
               >
                 Logout
               </button>
@@ -946,9 +955,26 @@ export default function DoctorDashboard() {
           </div>
         </div>
       </div>
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 z-40" onClick={() => setMobileOpen(false)}>
+          <div className="absolute top-16 left-0 right-0">
+            <div className="mx-3 bg-white/98 backdrop-blur-md rounded-xl shadow-lg border border-blue-200/50 py-2" onClick={(e) => e.stopPropagation()}>
+              <nav className="flex flex-col space-y-2 px-3">
+                <Link to="/doctor/dashboard" className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm hover:bg-blue-50">Dashboard</Link>
+                <Link to="/doctor/appointments" className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm hover:bg-blue-50">Appointments</Link>
+                <Link to="/doctor/profile" className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm hover:bg-blue-50">Profile</Link>
+                <button
+                  onClick={() => { try { const uid = localStorage.getItem('userId') || ''; if (uid) { localStorage.setItem(`doctorOnlineById_${uid}`, '0'); localStorage.setItem(`doctorBusyById_${uid}`, '0'); } } catch(_) {}; localStorage.removeItem('token'); nav('/doctor/login'); }}
+                  className="px-3 py-2 rounded-lg text-white text-sm bg-gradient-to-r from-blue-500 to-purple-600"
+                >Logout</button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-12 gap-6">
         <main className="col-span-12">
-          <div className="fixed right-4 top-4 z-50 space-y-2">
+          <div className="hidden sm:block fixed right-4 top-4 z-50 space-y-2">
             {notifs.map((n) => (
               <button key={n.id} onClick={async () => {
                 try {
@@ -1035,12 +1061,12 @@ export default function DoctorDashboard() {
               ) : (
                 <div className="space-y-2">
                   {upcoming.map((a) => (
-                    <div key={a._id} className="flex items-center justify-between bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
-                      <div>
+                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
+                      <div className="min-w-0">
                         <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
                         <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
                         {String(a.status).toUpperCase() !== 'CANCELLED' && (
                           <span className={`inline-block text-xs px-2 py-1 rounded ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
                         )}
@@ -1080,12 +1106,12 @@ export default function DoctorDashboard() {
               ) : (
                 <div className="space-y-2">
                   {completed.map((a) => (
-                    <div key={a._id} className="flex items-center justify-between bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
-                      <div>
+                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-200/60 rounded-lg px-3 py-2 hover:shadow-sm">
+                      <div className="min-w-0">
                         <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
                         <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
                         {a.prescriptionText ? (
                           <button onClick={() => nav(`/prescription/${a._id || a.id}`)} className="px-2 py-1 rounded-md border border-indigo-600 text-indigo-700 text-xs">Prescription</button>
                         ) : (
@@ -1150,12 +1176,12 @@ export default function DoctorDashboard() {
                 <div className="text-slate-600">No appointments</div>
               ) : (
                 (list || []).slice().sort((x, y) => apptStartTs(y) - apptStartTs(x)).map((a) => (
-                  <div key={a._id} className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2">
-                    <div>
+                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-200 rounded-lg px-3 py-2">
+                    <div className="min-w-0">
                       <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
                       <div className="text-xs text-slate-600">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
                       {(() => {
                         const s = String(a.status).toUpperCase();
                         const cls = s === 'PENDING' ? 'bg-amber-100 text-amber-700' : s === 'CONFIRMED' ? 'bg-indigo-100 text-indigo-700' : s === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
@@ -1191,8 +1217,8 @@ export default function DoctorDashboard() {
                 <div className="text-slate-600">No recent bookings</div>
               ) : (
                 latest.map((a) => (
-                  <div key={a._id} className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2">
-                    <div className="flex items-center gap-3">
+                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-200 rounded-lg px-3 py-2">
+                    <div className="flex items-center gap-3 min-w-0">
                       {(() => {
                         const pid = String(a.patient?._id || a.patient || "");
                         let img = String(a.patient?.photoBase64 || localStorage.getItem(`userPhotoBase64ById_${pid}`) || "");
@@ -1229,7 +1255,7 @@ export default function DoctorDashboard() {
                       </div>
                     </div>
                     {String(a.status).toUpperCase() === "PENDING" ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
                         <button
                           onClick={() => accept(a._id || a.id)}
                           className="h-6 w-6 rounded-full bg-green-600 hover:bg-green-700 text-white flex items-center justify-center"
@@ -1254,9 +1280,9 @@ export default function DoctorDashboard() {
                           >
                             {s === "CANCELLED" ? "Cancelled" : s === "CONFIRMED" ? "Accepted" : "Completed"}
                           </span>
-                        );
-                      })()
-                    )}
+                      );
+                    })()
+                  )}
                     {canFollowUp(a) && (
                       <button
                         onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
@@ -1284,12 +1310,12 @@ export default function DoctorDashboard() {
                 <div className="text-slate-600">No appointments today</div>
               ) : (
                 (latestToday || []).map((a) => (
-                  <div key={a._id} className="flex items-center justify-between border border-slate-200 rounded-lg px-3 py-2">
+                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border border-slate-200 rounded-lg px-3 py-2">
                     <div>
                       <div className="font-semibold text-slate-900">{a.patient?.name || 'Patient'}</div>
                       <div className="text-xs text-slate-600">Time: {a.startTime} • Type: {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
                       {(() => {
                         const s = String(a.status).toUpperCase();
                         const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';

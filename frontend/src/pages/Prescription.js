@@ -220,7 +220,7 @@ export default function Prescription() {
   return (
     <>
     <div className="screen-only min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      <div className="max-w-4xl mx-auto pt-8 px-4">
+      <div className="max-w-4xl mx-auto pt-16 sm:pt-20 px-4">
         <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h2 className="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{clinicName || 'Clinic/Hospital'}</h2>
@@ -298,7 +298,7 @@ export default function Prescription() {
 
         <div className="mt-6">
           <div className="text-slate-900 font-semibold">Medicines</div>
-          <div className="mt-2 overflow-x-auto">
+          <div className="mt-2 hidden sm:block overflow-x-auto">
             <table className="min-w-full text-left rounded-xl overflow-hidden border border-blue-200">
               <thead className="bg-blue-50">
                 <tr>
@@ -376,6 +376,50 @@ export default function Prescription() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="mt-2 sm:hidden space-y-3">
+            {medRows.map((m, idx) => (
+              <div key={idx} className="border border-blue-200 rounded-xl bg-white/90 p-3">
+                <label className="text-xs text-slate-600">Medicine</label>
+                <input
+                  value={m.name}
+                  onChange={(e) => {
+                    const next = [...medRows];
+                    next[idx] = { ...next[idx], name: e.target.value };
+                    setMedRows(next);
+                  }}
+                  readOnly={!edit}
+                  placeholder="Medicine name"
+                  className="mt-1 w-full border border-blue-200 rounded-xl px-2 py-1 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                />
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!m.morning} onChange={(e) => { const next = [...medRows]; next[idx] = { ...next[idx], morning: e.target.checked }; setMedRows(next); }} disabled={!edit} /><span>Morning</span></label>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!m.afternoon} onChange={(e) => { const next = [...medRows]; next[idx] = { ...next[idx], afternoon: e.target.checked }; setMedRows(next); }} disabled={!edit} /><span>Afternoon</span></label>
+                  <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={!!m.night} onChange={(e) => { const next = [...medRows]; next[idx] = { ...next[idx], night: e.target.checked }; setMedRows(next); }} disabled={!edit} /><span>Night</span></label>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="text-xs text-slate-600">Food</label>
+                    <input
+                      value={m.food}
+                      onChange={(e) => { const next = [...medRows]; next[idx] = { ...next[idx], food: e.target.value }; setMedRows(next); }}
+                      readOnly={!edit}
+                      placeholder="Before/After"
+                      className="mt-1 w-full border border-blue-200 rounded-xl px-2 py-1 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-600">Days</label>
+                    <input
+                      value={m.days}
+                      onChange={(e) => { const next = [...medRows]; next[idx] = { ...next[idx], days: e.target.value }; setMedRows(next); }}
+                      readOnly={!edit}
+                      className="mt-1 w-full border border-blue-200 rounded-xl px-2 py-1 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
           {edit && (
             <button

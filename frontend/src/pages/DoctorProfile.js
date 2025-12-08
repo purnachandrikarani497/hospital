@@ -215,7 +215,7 @@ export default function DoctorProfile() {
   return (
     <div className="max-w-7xl mx-auto px-4 pt-16 page-gradient">
       <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
-        <div className="max-w-7xl mx-auto px-6 relative">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
               <Link to="/doctor/dashboard" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
@@ -225,7 +225,7 @@ export default function DoctorProfile() {
                   </div>
                 </div>
                 <div className="flex flex-col">
-                  <span className="text-2xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
                     HospoZen
                   </span>
                 </div>
@@ -252,10 +252,19 @@ export default function DoctorProfile() {
                 );
               })()}
             </nav>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                className="lg:hidden p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300"
+                onClick={() => setPanelOpen((v) => !v)}
+                title="Menu"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              </button>
               <button
                 onClick={() => { localStorage.removeItem("token"); nav("/doctor/login"); }}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
+                className="hidden sm:inline-flex bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 border-2 border-white/20"
               >
                 Logout
               </button>
@@ -263,6 +272,23 @@ export default function DoctorProfile() {
           </div>
         </div>
       </div>
+      {panelOpen && (
+        <div className="lg:hidden fixed inset-0 z-40" onClick={() => setPanelOpen(false)}>
+          <div className="absolute top-16 left-0 right-0">
+            <div className="mx-3 bg-white/98 backdrop-blur-md rounded-xl shadow-lg border border-blue-200/50 py-2" onClick={(e) => e.stopPropagation()}>
+              <nav className="flex flex-col space-y-2 px-3">
+                <Link to="/doctor/dashboard" className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm hover:bg-blue-50">Dashboard</Link>
+                <Link to="/doctor/appointments" className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm hover:bg-blue-50">Appointments</Link>
+                <Link to="/doctor/profile" className="px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-sm hover:bg-blue-50">Profile</Link>
+                <button
+                  onClick={() => { localStorage.removeItem('token'); nav('/doctor/login'); }}
+                  className="px-3 py-2 rounded-lg text-white text-sm bg-gradient-to-r from-blue-500 to-purple-600"
+                >Logout</button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="grid grid-cols-12 gap-6">
         <main className="col-span-12">
           <div className="mb-6">
