@@ -20,6 +20,9 @@ export default function Prescription() {
   const [food, setFood] = useState("");
   const [notes, setNotes] = useState("");
   const [advice, setAdvice] = useState("");
+  const [medRows, setMedRows] = useState([
+    { name: "", morning: false, afternoon: false, night: false, food: "", days: "" }
+  ]);
 
   useEffect(() => {
     const load = async () => {
@@ -115,7 +118,26 @@ export default function Prescription() {
       food: getVal('Instructions') || getVal('Before/After food') || getVal('Food'),
       advice: getVal('Lifestyle advice') || getVal('Advice'),
       notes: getVal('Remarks') || getVal('Notes'),
+      medListText: getVal('Medicines List')
     };
+    try {
+      const segs = String(obj.medListText || '').split(';').map((s) => s.trim()).filter(Boolean);
+      obj.medListRows = segs.map((seg) => {
+        const tokens = seg.split('|').map((t) => t.trim()).filter(Boolean);
+        const r = { name: '', morning: false, afternoon: false, night: false, food: '', days: '' };
+        tokens.forEach((t, i) => {
+          if (i === 0) { r.name = t; return; }
+          const low = t.toLowerCase();
+          if (low.includes('morning')) r.morning = true;
+          if (low.includes('afternoon')) r.afternoon = true;
+          if (low.includes('night')) r.night = true;
+          const mDays = t.match(/^(\d+)\s*days?$/i);
+          if (mDays) { r.days = mDays[1]; return; }
+          if (low.includes('before') || low.includes('after')) r.food = t;
+        });
+        return r;
+      });
+    } catch(_) {}
     return obj;
   }, [appt]);
 
@@ -141,6 +163,14 @@ export default function Prescription() {
     setAdvice(parsed.advice || '');
     setNotes(parsed.notes || '');
   }, [appt, symptomsText, parsed]);
+
+  useEffect(() => {
+    try {
+      const hasDefault = Array.isArray(medRows) && medRows.length === 1 && !medRows[0].name && !medRows[0].morning && !medRows[0].afternoon && !medRows[0].night && !medRows[0].food && !medRows[0].days;
+      const rows = Array.isArray(parsed.medListRows) ? parsed.medListRows : [];
+      if (hasDefault && rows.length) setMedRows(rows);
+    } catch(_) {}
+  }, [parsed, edit]);
 
   const isDoctorUser = useMemo(() => {
     try {
@@ -229,28 +259,94 @@ export default function Prescription() {
         </div>
 
         <div className="mt-6">
-          <div className="text-slate-900 font-semibold">Rx</div>
-          {edit ? (
-            <div className="grid md:grid-cols-2 gap-3 mt-2">
-              <input value={medicines} onChange={(e) => setMedicines(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Medicine name" />
-              <input value={dosage} onChange={(e) => setDosage(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Dosage" />
-              <input value={duration} onChange={(e) => setDuration(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Duration" />
-              <input value={route} onChange={(e) => setRoute(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Measure" />
-              <input value={food} onChange={(e) => setFood(e.target.value)} className="w-full border border-blue-200 rounded-xl px-3 py-2 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Instructions" />
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-3 mt-2">
-              <div className="text-sm text-slate-800">Medicine: <span className="text-slate-900">{parsed.medicines}</span></div>
-              <div className="text-sm text-slate-800">Dosage: <span className="text-slate-900">{parsed.dosage}</span></div>
-              <div className="text-sm text-slate-800">Duration: <span className="text-slate-900">{parsed.duration}</span></div>
-              <div className="text-sm text-slate-800">Measure: <span className="text-slate-900">{parsed.route}</span></div>
-              <div className="text-sm text-slate-800">Instructions: <span className="text-slate-900">{parsed.food}</span></div>
-            </div>
-          )}
-          {edit ? (
-            <textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} className="w-full border border-blue-200 rounded-xl p-3 text-sm mt-2 bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300" placeholder="Remarks" />
-          ) : (
-            <div className="mt-2 text-sm text-slate-800">Remarks: <span className="text-slate-900">{parsed.notes}</span></div>
+          <div className="text-slate-900 font-semibold">Medicines</div>
+          <div className="mt-2 overflow-x-auto">
+            <table className="min-w-full text-left rounded-xl overflow-hidden border border-blue-200">
+              <thead className="bg-blue-50">
+                <tr>
+                  <th className="px-3 py-2 border-b border-blue-200">Medicine</th>
+                  <th className="px-3 py-2 border-b border-blue-200">Morning</th>
+                  <th className="px-3 py-2 border-b border-blue-200">Afternoon</th>
+                  <th className="px-3 py-2 border-b border-blue-200">Night</th>
+                  <th className="px-3 py-2 border-b border-blue-200">Food</th>
+                  <th className="px-3 py-2 border-b border-blue-200">Days</th>
+                </tr>
+              </thead>
+              <tbody>
+                {medRows.map((m, idx) => (
+                  <tr key={idx} className="odd:bg-white even:bg-blue-50/30">
+                    <td className="px-3 py-2 border-b border-blue-200">
+                      <input
+                        value={m.name}
+                        onChange={(e) => {
+                          const next = [...medRows];
+                          next[idx] = { ...next[idx], name: e.target.value };
+                          setMedRows(next);
+                        }}
+                        readOnly={!edit}
+                        placeholder="Medicine name"
+                        className="w-full border border-blue-200 rounded-xl px-2 py-1 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      />
+                    </td>
+                    <td className="px-3 py-2 border-b border-blue-200 text-center">
+                      <input type="checkbox" checked={!!m.morning} onChange={(e) => {
+                        const next = [...medRows];
+                        next[idx] = { ...next[idx], morning: e.target.checked };
+                        setMedRows(next);
+                      }} disabled={!edit} />
+                    </td>
+                    <td className="px-3 py-2 border-b border-blue-200 text-center">
+                      <input type="checkbox" checked={!!m.afternoon} onChange={(e) => {
+                        const next = [...medRows];
+                        next[idx] = { ...next[idx], afternoon: e.target.checked };
+                        setMedRows(next);
+                      }} disabled={!edit} />
+                    </td>
+                    <td className="px-3 py-2 border-b border-blue-200 text-center">
+                      <input type="checkbox" checked={!!m.night} onChange={(e) => {
+                        const next = [...medRows];
+                        next[idx] = { ...next[idx], night: e.target.checked };
+                        setMedRows(next);
+                      }} disabled={!edit} />
+                    </td>
+                    <td className="px-3 py-2 border-b border-blue-200">
+                      <input
+                        value={m.food}
+                        onChange={(e) => {
+                          const next = [...medRows];
+                          next[idx] = { ...next[idx], food: e.target.value };
+                          setMedRows(next);
+                        }}
+                        readOnly={!edit}
+                        placeholder="Before/After"
+                        className="w-full border border-blue-200 rounded-xl px-2 py-1 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      />
+                    </td>
+                    <td className="px-3 py-2 border-b border-blue-200">
+                      <input
+                        value={m.days}
+                        onChange={(e) => {
+                          const next = [...medRows];
+                          next[idx] = { ...next[idx], days: e.target.value };
+                          setMedRows(next);
+                        }}
+                        readOnly={!edit}
+                        className="w-full border border-blue-200 rounded-xl px-2 py-1 text-sm bg-white/70 focus:outline-none focus:ring-2 focus:ring-blue-300"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {edit && (
+            <button
+              type="button"
+              onClick={() => setMedRows((prev) => prev.concat({ name: "", morning: false, afternoon: false, night: false, food: "", days: "" }))}
+              className="mt-2 px-3 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              Add Medicine
+            </button>
           )}
         </div>
 
@@ -300,6 +396,15 @@ export default function Prescription() {
                   food ? `Instructions: ${food}` : '',
                   advice ? `Lifestyle advice: ${advice}` : '',
                   notes ? `Remarks: ${notes}` : '',
+                  (Array.isArray(medRows) && medRows.length) ? `Medicines List: ${medRows.map((m) => {
+                    const items = [];
+                    if (m.name) items.push(m.name);
+                    const times = [m.morning ? 'Morning' : '', m.afternoon ? 'Afternoon' : '', m.night ? 'Night' : ''].filter(Boolean).join(', ');
+                    if (times) items.push(times);
+                    if (m.food) items.push(m.food);
+                    if (m.days) items.push(`${m.days} days`);
+                    return items.join(' | ');
+                  }).filter(Boolean).join('; ')}` : ''
                 ].filter(Boolean);
                 const text = parts.join('\n');
                 try {
@@ -331,11 +436,34 @@ export default function Prescription() {
               </button>
               <button onClick={() => { try { window.print(); } catch(_) {} }} className="px-4 py-2 rounded-xl border border-blue-200 text-blue-700 hover:bg-blue-50">Download PDF</button>
               {isDoctorUser && (
-                <button
-                  onClick={async () => {
-                    const key = String(id);
-                    const viewUrl = `${window.location.origin}/prescription/${id}`;
-                    try {
+              <button
+                onClick={async () => {
+                  const key = String(id);
+                  const viewUrl = `${window.location.origin}/prescription/${id}`;
+                  const parts = [
+                    symptoms ? `Complaint: ${symptoms}` : '',
+                    observations ? `Observations: ${observations}` : '',
+                    diagnosis ? `Diagnosis: ${diagnosis}` : '',
+                    tests ? `Investigations Suggested: ${tests}` : '',
+                    medicines ? `Medicines: ${medicines}` : '',
+                    dosage ? `Dosage: ${dosage}` : '',
+                    duration ? `Duration: ${duration}` : '',
+                    route ? `Measure: ${route}` : '',
+                    food ? `Instructions: ${food}` : '',
+                    advice ? `Lifestyle advice: ${advice}` : '',
+                    notes ? `Remarks: ${notes}` : '',
+                    (Array.isArray(medRows) && medRows.length) ? `Medicines List: ${medRows.map((m) => {
+                      const items = [];
+                      if (m.name) items.push(m.name);
+                      const times = [m.morning ? 'Morning' : '', m.afternoon ? 'Afternoon' : '', m.night ? 'Night' : ''].filter(Boolean).join(', ');
+                      if (times) items.push(times);
+                      if (m.food) items.push(m.food);
+                      if (m.days) items.push(`${m.days} days`);
+                      return items.join(' | ');
+                    }).filter(Boolean).join('; ')}` : ''
+                  ].filter(Boolean);
+                  const text = parts.join('\n');
+                  try {
                       const prev = JSON.parse(localStorage.getItem(`wr_${key}_prevpres`) || '[]');
                       const label = `Prescription ${when}`;
                       const item = { name: label, url: viewUrl, by: "doctor" };
@@ -343,7 +471,7 @@ export default function Prescription() {
                       localStorage.setItem(`wr_${key}_prevpres`, JSON.stringify(next));
                       try { const chan = new BroadcastChannel('prescriptions'); chan.postMessage({ id: key, item }); chan.close(); } catch (_) {}
                     } catch (_) {}
-                    try { await API.post(`/appointments/${id}/prescription`, { text: appt?.prescriptionText || "" }); } catch (_) {}
+                    try { await API.post(`/appointments/${id}/prescription`, { text }); } catch (_) {}
                     try {
                       if (navigator.share) {
                         await navigator.share({ title: 'Prescription', url: viewUrl });
