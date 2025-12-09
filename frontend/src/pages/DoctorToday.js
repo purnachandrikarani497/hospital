@@ -43,6 +43,7 @@ export default function DoctorToday() {
   const [consFiles, setConsFiles] = useState([]);
   const [consHistory, setConsHistory] = useState([]);
   const socketRef = useRef(null);
+  const meetMonitorRef = useRef(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [summaryId, setSummaryId] = useState("");
   const [filePreview, setFilePreview] = useState(null);
@@ -335,6 +336,12 @@ export default function DoctorToday() {
       setConsHistory([]);
     } catch (_) { setConsHistory([]); }
   }, [consult, list]);
+
+  useEffect(() => {
+    return () => {
+      try { if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; } } catch(_) {}
+    };
+  }, []);
 
   useEffect(() => {
     if (!detailsAppt) return;
@@ -1053,10 +1060,41 @@ export default function DoctorToday() {
                           return;
                         }
                       }
-                      try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
-                      try { meetChanRef.current && meetChanRef.current.postMessage({ id, url }); } catch(_) {}
-                      window.open(url, '_blank');
-                    }} className="px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white">Open Meeting</button>
+                    try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
+                    try { meetChanRef.current && meetChanRef.current.postMessage({ id, url }); } catch(_) {}
+                    try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); localStorage.setItem(`everJoinedDoctor_${id}`, '1'); } catch(_) {}
+                    try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
+                    window.open(url, '_blank');
+                    try {
+                      if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+                      meetMonitorRef.current = setInterval(async () => {
+                        try {
+                          const end = new Date(consult.date);
+                          const [eh, em] = String(consult.endTime || consult.startTime || '00:00').split(':').map((x) => Number(x));
+                          end.setHours(eh, em, 0, 0);
+                          const now = Date.now();
+                          const expired = now >= end.getTime();
+                          if (expired) {
+                            const pjEver = localStorage.getItem(`everJoinedPatient_${id}`) === '1';
+                            const djEver = localStorage.getItem(`everJoinedDoctor_${id}`) === '1';
+                            const both = pjEver && djEver;
+                            try { localStorage.setItem(`joinedByDoctor_${id}`, '0'); } catch(_) {}
+                            try {
+                              if (both) {
+                                await API.put(`/appointments/${id}/complete`);
+                                socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'complete' });
+                              } else {
+                                socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' });
+                              }
+                            } catch(_) {}
+                            clearInterval(meetMonitorRef.current);
+                            meetMonitorRef.current = null;
+                            return;
+                          }
+                        } catch(_) {}
+                      }, 1000);
+                    } catch(_) {}
+                  }} className="px-3 py-2 rounded-md bg-green-600 hover:bg-green-700 text-white">Open Meeting</button>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         onClick={() => { window.open(`/prescription/${consult._id || consult.id}?print=1`, '_blank'); }}

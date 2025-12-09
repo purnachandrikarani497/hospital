@@ -415,6 +415,7 @@ export default function Appointments() {
               const active = now >= d.getTime() && now < end.getTime();
               if (event === 'join' && actor === 'doctor') {
                 try { localStorage.setItem(`doctorJoined_${id}`, '1'); } catch(_) {}
+                try { localStorage.setItem(`everJoinedDoctor_${id}`, '1'); } catch(_) {}
                 setProfiles((prev) => {
                   const next = new Map(prev);
                   const did = String(a.doctor?._id || a.doctor || '');
@@ -444,7 +445,7 @@ export default function Appointments() {
                 } catch(_) {}
                 setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'COMPLETED' } : x)));
               } else if (event === 'join' && actor === 'patient') {
-                try { localStorage.setItem(`joinedByPatient_${id}`, '1'); } catch(_) {}
+                try { localStorage.setItem(`joinedByPatient_${id}`, '1'); localStorage.setItem(`everJoinedPatient_${id}`, '1'); } catch(_) {}
                 setList((prev) => prev.slice());
               } else if (event === 'exit' && actor === 'patient') {
                 try { localStorage.removeItem(`joinedByPatient_${id}`); } catch(_) {}
@@ -859,37 +860,7 @@ export default function Appointments() {
                                       View Prescription
                                     </button>
                                   )}
-                                  {canFollowUp(a) && (
-                                    <button
-                                      onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {}; nav(`/appointments/${id}/followup`); } }}
-                                      className="border border-green-600 text-green-700 px-3 py-1 rounded-md"
-                                    >
-                                      Follow-up
-                                    </button>
-                                  )}
-                                  {(() => {
-                                    const key = `rate_${String(a._id || a.id || '')}`;
-                                    let rated = false;
-                                    try { rated = Number(localStorage.getItem(`${key}_stars`) || 0) > 0; } catch(_) {}
-                                    return (
-                                      <button
-                                        onClick={() => {
-                                          if (rated) return;
-                                          setRateAppt(a);
-                                          try {
-                                            const stars = Number(localStorage.getItem(`${key}_stars`) || 0) || 0;
-                                            const text = String(localStorage.getItem(`${key}_comment`) || '') || '';
-                                            setRateStars(stars);
-                                            setRateText(text);
-                                          } catch(_) { setRateStars(0); setRateText(''); }
-                                        }}
-                                        disabled={rated}
-                                        className={`border px-3 py-1 rounded-md ${rated ? 'border-slate-300 text-slate-400 cursor-not-allowed' : 'border-green-600 text-green-700'}`}
-                                      >
-                                        {rated ? 'Rated' : 'Rate Doctor'}
-                                      </button>
-                                    );
-                                  })()}
+                                  
                                 </>
                               );
                             }
@@ -948,6 +919,7 @@ export default function Appointments() {
                                     try { socketRef.current && socketRef.current.emit('meet:update', { apptId: String(a._id || a.id), actor: 'patient', event: 'join' }); } catch(_) {}
                                     try {
                                       const idX = String(a._id || a.id);
+                                      try { localStorage.setItem(`everJoinedPatient_${idX}`, '1'); } catch(_) {}
                                       const monitor = setInterval(() => {
                                         const end = new Date(a.date);
                                         const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
@@ -955,12 +927,15 @@ export default function Appointments() {
                                         const now = Date.now();
                                         const expired = now >= end.getTime();
                                         if (expired) {
+                                          const djEver = localStorage.getItem(`everJoinedDoctor_${idX}`) === '1';
+                                          const pjEver = localStorage.getItem(`everJoinedPatient_${idX}`) === '1';
+                                          const both = djEver && pjEver;
                                           try {
                                             localStorage.setItem(`joinedByPatient_${idX}`, '0');
                                             localStorage.setItem(`openMeeting_${idX}`, '0');
-                                            setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'COMPLETED' } : x)));
+                                            setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: both ? 'COMPLETED' : 'CONFIRMED' } : x)));
                                           } catch(_) {}
-                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: 'complete' }); } catch(_) {}
+                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: both ? 'complete' : 'exit' }); } catch(_) {}
                                           try {
                                             const w = meetWinRef.current[idX];
                                             if (w && !w.closed) w.close();

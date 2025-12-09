@@ -286,7 +286,7 @@ export default function DoctorDashboard() {
       } else {
         try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
       }
-      try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
+      try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); localStorage.setItem(`everJoinedDoctor_${id}`, '1'); } catch(_) {}
       try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'join' }); } catch(_) {}
       try {
         const uid = localStorage.getItem('userId') || '';
@@ -300,31 +300,41 @@ export default function DoctorDashboard() {
       try { const chan = new BroadcastChannel('doctorStatus'); const uid = localStorage.getItem('userId') || ''; chan.postMessage({ uid, online: true, busy: true }); chan.close(); } catch(_) {}
       try {
         meetWinRef.current = window.open(url, 'doctorMeet');
-        meetMonitorRef.current = setInterval(() => {
+        meetMonitorRef.current = setInterval(async () => {
           try {
             const end = new Date(a.date);
             const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
             end.setHours(eh, em, 0, 0);
             const now = Date.now();
-            const expired = now >= end.getTime();
-            if (expired) {
-              try { localStorage.setItem(`joinedByDoctor_${id}`, '0'); } catch(_) {}
-              try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'complete' }); } catch(_) {}
-              try {
-                const uid = localStorage.getItem('userId') || '';
-                if (uid) {
-                  localStorage.setItem(`doctorBusyById_${uid}`, '0');
-                  API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
-                }
-              } catch(_) {}
-              setBusy(false);
-              setOnline(true);
-              try { const chan = new BroadcastChannel('doctorStatus'); const uid2 = localStorage.getItem('userId') || ''; chan.postMessage({ uid: uid2, online: true, busy: false }); chan.close(); } catch(_) {}
-              try { if (meetWinRef.current && !meetWinRef.current.closed) meetWinRef.current.close(); } catch(_) {}
-              meetWinRef.current = null;
-              if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
-              return;
-            }
+          const expired = now >= end.getTime();
+          if (expired) {
+            const pjEver = localStorage.getItem(`everJoinedPatient_${id}`) === '1';
+            const djEver = localStorage.getItem(`everJoinedDoctor_${id}`) === '1';
+            const both = pjEver && djEver;
+            try { localStorage.setItem(`joinedByDoctor_${id}`, '0'); } catch(_) {}
+            try {
+              if (both) {
+                await API.put(`/appointments/${id}/complete`);
+                socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'complete' });
+              } else {
+                socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'exit' });
+              }
+            } catch(_) {}
+            try {
+              const uid = localStorage.getItem('userId') || '';
+              if (uid) {
+                localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+              }
+            } catch(_) {}
+            setBusy(false);
+            setOnline(true);
+            try { const chan = new BroadcastChannel('doctorStatus'); const uid2 = localStorage.getItem('userId') || ''; chan.postMessage({ uid: uid2, online: true, busy: false }); chan.close(); } catch(_) {}
+            try { if (meetWinRef.current && !meetWinRef.current.closed) meetWinRef.current.close(); } catch(_) {}
+            meetWinRef.current = null;
+            if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+            return;
+          }
           } catch(_) {}
           if (!meetWinRef.current || meetWinRef.current.closed) {
             if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
@@ -448,7 +458,7 @@ export default function DoctorDashboard() {
                   try { localStorage.removeItem(`joinedByPatient_${id}`); } catch(_) {}
                   if (active) setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'CONFIRMED' } : x)));
                 } else if (event === 'join' && actor === 'doctor') {
-                  try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); } catch(_) {}
+                  try { localStorage.setItem(`joinedByDoctor_${id}`, '1'); localStorage.setItem(`everJoinedDoctor_${id}`, '1'); } catch(_) {}
                   setBusy(true);
                   setOnline(true);
                 } else if (event === 'exit' && actor === 'doctor') {
