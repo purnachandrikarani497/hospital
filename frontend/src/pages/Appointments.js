@@ -431,6 +431,16 @@ export default function Appointments() {
                   return next;
                 });
               } else if (event === 'complete') {
+                try { localStorage.setItem(`joinedByPatient_${id}`, '0'); } catch(_) {}
+                try {
+                  const mon = meetMonitorRef.current[id];
+                  if (mon) { clearInterval(mon); meetMonitorRef.current[id] = null; }
+                } catch(_) {}
+                try {
+                  const w = meetWinRef.current[id];
+                  if (w && !w.closed) w.close();
+                  meetWinRef.current[id] = null;
+                } catch(_) {}
                 setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'COMPLETED' } : x)));
               } else if (event === 'join' && actor === 'patient') {
                 try { localStorage.setItem(`joinedByPatient_${id}`, '1'); } catch(_) {}
@@ -746,7 +756,6 @@ export default function Appointments() {
                   ) : String(a.status).toUpperCase() === 'COMPLETED' ? (
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Consultation Completed</span>
-                      <button disabled className="border border-slate-200 text-slate-400 px-3 py-1 rounded-md cursor-not-allowed">Session Completed</button>
                       {a.prescriptionText && (
                         <button
                           onClick={() => { const id = String(a._id || a.id || ''); if (id) nav(`/prescription/${id}`); }}
@@ -770,7 +779,7 @@ export default function Appointments() {
                         }}
                         className="border border-slate-300 px-3 py-1 rounded-md"
                       >
-                        Book Again
+                        Book Next Slot
                       </button>
                       {(() => {
                         const key = `rate_${String(a._id || a.id || '')}`;
@@ -835,6 +844,45 @@ export default function Appointments() {
                                   {docId && (
                                     <button onClick={() => nav(`/doctor/${String(docId)}`)} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Book Next Slot</button>
                                   )}
+                                  {a.prescriptionText && (
+                                    <button
+                                      onClick={() => { const id = String(a._id || a.id || ''); if (id) nav(`/prescription/${id}`); }}
+                                      className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
+                                    >
+                                      View Prescription
+                                    </button>
+                                  )}
+                                  {canFollowUp(a) && (
+                                    <button
+                                      onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {}; nav(`/appointments/${id}/followup`); } }}
+                                      className="border border-green-600 text-green-700 px-3 py-1 rounded-md"
+                                    >
+                                      Follow-up
+                                    </button>
+                                  )}
+                                  {(() => {
+                                    const key = `rate_${String(a._id || a.id || '')}`;
+                                    let rated = false;
+                                    try { rated = Number(localStorage.getItem(`${key}_stars`) || 0) > 0; } catch(_) {}
+                                    return (
+                                      <button
+                                        onClick={() => {
+                                          if (rated) return;
+                                          setRateAppt(a);
+                                          try {
+                                            const stars = Number(localStorage.getItem(`${key}_stars`) || 0) || 0;
+                                            const text = String(localStorage.getItem(`${key}_comment`) || '') || '';
+                                            setRateStars(stars);
+                                            setRateText(text);
+                                          } catch(_) { setRateStars(0); setRateText(''); }
+                                        }}
+                                        disabled={rated}
+                                        className={`border px-3 py-1 rounded-md ${rated ? 'border-slate-300 text-slate-400 cursor-not-allowed' : 'border-green-600 text-green-700'}`}
+                                      >
+                                        {rated ? 'Rated' : 'Rate Doctor'}
+                                      </button>
+                                    );
+                                  })()}
                                 </>
                               );
                             }
@@ -961,70 +1009,128 @@ export default function Appointments() {
                           } catch (_) { return null; }
                         })()
                       )}
-                      <button
-                        onClick={() => {
-                          const id = String(a._id || a.id);
-                          nav(`/appointments/${id}/details`);
-                        }}
-                        className="border border-slate-600 text-slate-700 px-3 py-1 rounded-md"
-                      >
-                        View Details
-                      </button>
+                      {(() => {
+                        try {
+                          const start = new Date(a.date);
+                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                          start.setHours(sh, sm, 0, 0);
+                          const end = new Date(a.date);
+                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                          end.setHours(eh, em, 0, 0);
+                          const now = Date.now();
+                          const expired = now >= end.getTime();
+                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
+                          if (expired || completed) return null;
+                        } catch(_) {}
+                        return (
+                          <button
+                            onClick={() => {
+                              const id = String(a._id || a.id);
+                              nav(`/appointments/${id}/details`);
+                            }}
+                            className="border border-slate-600 text-slate-700 px-3 py-1 rounded-md"
+                          >
+                            View Details
+                          </button>
+                        );
+                      })()}
                       
-                      {String(a.paymentStatus).toUpperCase() !== 'PAID' ? (
-                        <button
-                          onClick={() => nav(`/pay/${a._id}`)}
-                          className="border border-slate-300 px-3 py-1 rounded-md"
-                        >
-                          Pay Online
-                        </button>
-                      ) : (
-                        <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Paid</span>
-                      )}
-                      {canCancelAppt(a) && (
-                        <button
-                          onClick={() => cancel(a._id || a.id)}
-                          disabled={!a?._id}
-                          className={`border px-3 py-1 rounded-md ${(!a?._id) ? 'border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`}
-                        >
-                          Cancel appointment
-                        </button>
-                      )}
-                      {a.prescriptionText && (
-                        <>
+                      {(() => {
+                        try {
+                          const start = new Date(a.date);
+                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                          start.setHours(sh, sm, 0, 0);
+                          const end = new Date(a.date);
+                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                          end.setHours(eh, em, 0, 0);
+                          const now = Date.now();
+                          const expired = now >= end.getTime();
+                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
+                          if (expired || completed) return null;
+                        } catch(_) {}
+                        return (String(a.paymentStatus).toUpperCase() !== 'PAID' ? (
                           <button
-                            onClick={() => nav(`/prescription/${a._id || a.id}`)}
-                            className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
-                          >
-                            View Prescription
-                          </button>
-                          <button
-                            onClick={() => window.open(`/prescription/${a._id || a.id}?print=1`, '_blank')}
+                            onClick={() => nav(`/pay/${a._id}`)}
                             className="border border-slate-300 px-3 py-1 rounded-md"
                           >
-                            Download PDF
+                            Pay Online
                           </button>
+                        ) : (
+                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Paid</span>
+                        ));
+                      })()}
+                      {(() => {
+                        try {
+                          const start = new Date(a.date);
+                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                          start.setHours(sh, sm, 0, 0);
+                          const end = new Date(a.date);
+                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                          end.setHours(eh, em, 0, 0);
+                          const now = Date.now();
+                          const expired = now >= end.getTime();
+                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
+                          if (expired || completed) return null;
+                        } catch(_) {}
+                        return (canCancelAppt(a) && (
                           <button
-                            onClick={async () => {
-                              const url = `${window.location.origin}/prescription/${a._id || a.id}`;
-                              try { await navigator.clipboard.writeText(url); alert('Link copied for pharmacy'); } catch(_) {}
-                            }}
-                            className="border border-slate-300 px-3 py-1 rounded-md"
+                            onClick={() => cancel(a._id || a.id)}
+                            disabled={!a?._id}
+                            className={`border px-3 py-1 rounded-md ${(!a?._id) ? 'border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`}
                           >
-                            Share to pharmacy
+                            Cancel appointment
                           </button>
-                          <button
-                            onClick={async () => {
-                              const url = `${window.location.origin}/prescription/${a._id || a.id}`;
-                              try { await navigator.clipboard.writeText(url); alert('Link copied for lab tests'); } catch(_) {}
-                            }}
-                            className="border border-slate-300 px-3 py-1 rounded-md"
-                          >
-                            Share for lab tests
-                          </button>
-                          {null}
-                        </>
-                      )}
+                        ));
+                      })()}
+                      {(() => {
+                        try {
+                          const start = new Date(a.date);
+                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                          start.setHours(sh, sm, 0, 0);
+                          const end = new Date(a.date);
+                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                          end.setHours(eh, em, 0, 0);
+                          const now = Date.now();
+                          const expired = now >= end.getTime();
+                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
+                          if (expired || completed) return null;
+                        } catch(_) {}
+                        return (a.prescriptionText && (
+                          <>
+                            <button
+                              onClick={() => nav(`/prescription/${a._id || a.id}`)}
+                              className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
+                            >
+                              View Prescription
+                            </button>
+                            <button
+                              onClick={() => window.open(`/prescription/${a._id || a.id}?print=1`, '_blank')}
+                              className="border border-slate-300 px-3 py-1 rounded-md"
+                            >
+                              Download PDF
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const url = `${window.location.origin}/prescription/${a._id || a.id}`;
+                                try { await navigator.clipboard.writeText(url); alert('Link copied for pharmacy'); } catch(_) {}
+                              }}
+                              className="border border-slate-300 px-3 py-1 rounded-md"
+                            >
+                              Share to pharmacy
+                            </button>
+                            <button
+                              onClick={async () => {
+                                const url = `${window.location.origin}/prescription/${a._id || a.id}`;
+                                try { await navigator.clipboard.writeText(url); alert('Link copied for lab tests'); } catch(_) {}
+                              }}
+                              className="border border-slate-300 px-3 py-1 rounded-md"
+                            >
+                              Share for lab tests
+                            </button>
+                            {null}
+                          </>
+                        ));
+                      })()}
                     </>
                   )}
                 </div>

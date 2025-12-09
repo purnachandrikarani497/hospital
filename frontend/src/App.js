@@ -389,9 +389,12 @@ function Header() {
                                   onClick={async () => {
                                     try {
                                       const id = String(n.apptId || '');
-                                      if (n.type === 'chat' && id) {
+                                      const msg = String(n.message || '').toLowerCase();
+                                      if ((msg.includes('follow up') || n.type === 'followup' || n.type === 'chat') && id) {
                                         try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
                                         nav(`/appointments/${id}/followup`);
+                                      } else if ((msg.includes('view details') || n.type === 'details') && id) {
+                                        nav(`/appointments/${id}/details`);
                                       } else if (n.type === 'meet' && n.apptId) {
                                         const mid = String(n.apptId || '');
                                         if (mid) nav(`/appointments?joinMeet=${mid}`);
@@ -615,6 +618,43 @@ function Header() {
           </div>
         )}
       </div>
+      {token && notifs.length > 0 && (
+        <div className="fixed right-4 top-20 z-[60] space-y-2">
+          {notifs.map((n) => (
+            <button
+              key={n.id}
+              onClick={async () => {
+                try {
+                  const id = String(n.apptId || '');
+                  const msg = String(n.text || n.message || '').toLowerCase();
+                  if ((msg.includes('follow up') || n.type === 'followup' || n.type === 'chat') && id) {
+                    try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                    nav(`/appointments/${id}/followup`);
+                  } else if ((msg.includes('view details') || n.type === 'details') && id) {
+                    nav(`/appointments/${id}/details`);
+                  } else if (n.type === 'meet' && id) {
+                    nav(`/appointments?joinMeet=${id}`);
+                  } else if (n.link) {
+                    nav(n.link);
+                  } else {
+                    nav('/appointments');
+                  }
+                  try { if (n._id || n.idDb) await API.put(`/notifications/${n._id || n.idDb}/read`); } catch(_) {}
+                } catch(_) {}
+              }}
+              className="block w-80 text-left px-4 py-3 rounded-xl shadow-lg border border-blue-200 bg-white/95 hover:bg-blue-50 transition"
+            >
+              <div className="flex items-start gap-3">
+                <TypeIcon type={n.type} />
+                <div className="flex-1">
+                  <div className="text-sm text-slate-900 font-semibold">{n.text || n.message || 'Notification'}</div>
+                  {n.apptId && <div className="text-xs text-slate-500 mt-1">Appt #{n.apptId}</div>}
+                </div>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
     </header>
   );
 }

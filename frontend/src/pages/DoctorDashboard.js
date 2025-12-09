@@ -299,6 +299,31 @@ export default function DoctorDashboard() {
       try {
         meetWinRef.current = window.open(url, '_blank');
         meetMonitorRef.current = setInterval(() => {
+          try {
+            const end = new Date(a.date);
+            const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+            end.setHours(eh, em, 0, 0);
+            const now = Date.now();
+            const expired = now >= end.getTime();
+            if (expired) {
+              try { localStorage.setItem(`joinedByDoctor_${id}`, '0'); } catch(_) {}
+              try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'doctor', event: 'complete' }); } catch(_) {}
+              try {
+                const uid = localStorage.getItem('userId') || '';
+                if (uid) {
+                  localStorage.setItem(`doctorBusyById_${uid}`, '0');
+                  API.put('/doctors/me/status', { isOnline: true, isBusy: false }).catch(() => {});
+                }
+              } catch(_) {}
+              setBusy(false);
+              setOnline(true);
+              try { const chan = new BroadcastChannel('doctorStatus'); const uid2 = localStorage.getItem('userId') || ''; chan.postMessage({ uid: uid2, online: true, busy: false }); chan.close(); } catch(_) {}
+              try { if (meetWinRef.current && !meetWinRef.current.closed) meetWinRef.current.close(); } catch(_) {}
+              meetWinRef.current = null;
+              if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
+              return;
+            }
+          } catch(_) {}
           if (!meetWinRef.current || meetWinRef.current.closed) {
             if (meetMonitorRef.current) { clearInterval(meetMonitorRef.current); meetMonitorRef.current = null; }
             try { localStorage.removeItem(`joinedByDoctor_${id}`); } catch(_) {}
@@ -493,6 +518,7 @@ export default function DoctorDashboard() {
                     const arr = JSON.parse(localStorage.getItem(k) || '[]');
                     const next = (Array.isArray(arr) ? arr : []).concat(t);
                     localStorage.setItem(k, JSON.stringify(next));
+                    if (chatAppt && String(chatAppt._id || chatAppt.id) === id) setChatAppt((prev) => ({ ...(prev || {}) }));
                   } catch(_) {}
                 } else if (kind === 'followup' && t) {
                   try {
@@ -708,6 +734,38 @@ export default function DoctorDashboard() {
     return () => clearInterval(t);
   }, [list, latestToday, busy]);
 
+  useEffect(() => {
+    try {
+      const now = Date.now();
+      const src = ([]).concat(Array.isArray(list) ? list : [], Array.isArray(latestToday) ? latestToday : []);
+      const hasActive = src.some((a) => {
+        if (String(a.type).toLowerCase() !== 'online') return false;
+        const s = String(a.status || '').toUpperCase();
+        if (s === 'CANCELLED' || s === 'COMPLETED') return false;
+        const start = new Date(a.date);
+        const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+        start.setHours(sh, sm, 0, 0);
+        const end = new Date(a.date);
+        const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+        end.setHours(eh, em, 0, 0);
+        return now >= start.getTime() && now < end.getTime();
+      });
+      const inMeeting = src.some((a) => {
+        const id = String(a._id || a.id || '');
+        if (!id) return false;
+        return localStorage.getItem(`joinedByDoctor_${id}`) === '1';
+      });
+      if (!hasActive && !inMeeting && busy) {
+        const uid = localStorage.getItem('userId') || '';
+        try { if (uid) localStorage.setItem(`doctorBusyById_${uid}`, '0'); } catch(_) {}
+        setBusy(false);
+        setOnline(true);
+        try { API.put('/doctors/me/status', { isOnline: true, isBusy: false }); } catch(_) {}
+        try { const chan = new BroadcastChannel('doctorStatus'); chan.postMessage({ uid, online: true, busy: false }); chan.close(); } catch(_) {}
+      }
+    } catch(_) {}
+  }, [list, latestToday]);
+
   const completed = useMemo(() => {
     const arr = (list || []).filter((a) => String(a.status).toUpperCase() === "COMPLETED");
     arr.sort((x, y) => apptStartTs(y) - apptStartTs(x));
@@ -894,15 +952,18 @@ export default function DoctorDashboard() {
                       panelItems.map((n) => (
                         <div key={n._id || n.id} className="p-4 border-b border-gray-100 hover:bg-blue-50/50 transition-colors duration-200">
                           <div className="flex items-start justify-between">
-                            <button
-                              onClick={async () => {
-                                try {
-                                  if (n.type === 'chat' || n.type === 'followup') {
-                                    const id = String(n.apptId || '');
-                                    if (id) {
-                                      try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
-                                      nav(`/doctor/appointments/${id}/followup`);
-                                    }
+                              <button
+                                onClick={async () => {
+                                  try {
+                                  const id = String(n.apptId || '');
+                                  const msg = String(n.message || '').toLowerCase();
+                                  if ((n.type === 'chat' || msg.includes('new message')) && id) {
+                                    nav(`/doctor/appointments/${id}/documents`);
+                                  } else if ((msg.includes('follow up') || n.type === 'followup') && id) {
+                                    try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
+                                    nav(`/doctor/appointments/${id}/followup`);
+                                  } else if ((msg.includes('view details') || n.type === 'details') && id) {
+                                    nav(`/doctor/appointments/${id}/documents`);
                                   } else if (n.type === 'meet' && n.apptId) {
                                     await openMeetFor(n.apptId);
                                   } else if (n.type === 'appointment') {
@@ -915,9 +976,9 @@ export default function DoctorDashboard() {
                                   setPanelItems((prev) => prev.map((x) => (String(x._id || x.id) === String(n._id || n.id) ? { ...x, read: true } : x)));
                                   setPanelUnread((c) => Math.max(0, c - 1));
                                   setBellCount((c) => Math.max(0, c - 1));
-                                } catch(_) {}
-                              }}
-                              className="flex-1 text-left"
+                                  } catch(_) {}
+                                }}
+                                className="flex-1 text-left"
                             >
                               <div className="flex items-start gap-3">
                                 <TypeIcon type={n.type} />
@@ -975,13 +1036,18 @@ export default function DoctorDashboard() {
       <div className="grid grid-cols-12 gap-6">
         <main className="col-span-12">
           <div className="hidden sm:block fixed right-4 top-4 z-50 space-y-2">
-            {notifs.map((n) => (
+              {notifs.map((n) => (
               <button key={n.id} onClick={async () => {
                 try {
-                  if ((n.type === 'chat' || n.type === 'followup') && n.apptId) {
-                    const id = String(n.apptId);
+                  const id = String(n.apptId || '');
+                  const msg = String(n.text || '').toLowerCase();
+                  if ((n.type === 'chat' || msg.includes('new message')) && id) {
+                    nav(`/doctor/appointments/${id}/documents`);
+                  } else if ((msg.includes('follow up') || n.type === 'followup') && id) {
                     try { localStorage.setItem('lastChatApptId', id); } catch(_) {}
                     nav(`/doctor/appointments/${id}/followup`);
+                  } else if ((msg.includes('view details') || n.type === 'details') && id) {
+                    nav(`/doctor/appointments/${id}/documents`);
                   } else if (n.type === 'meet' && n.apptId) {
                     await openMeetFor(n.apptId);
                   } else if (n.link) {
@@ -989,7 +1055,7 @@ export default function DoctorDashboard() {
                   } else if (n.type === 'meet' || n.type === 'appointment') {
                     nav('/doctor/appointments');
                   } else if (n.apptId) {
-                    nav('/doctor/dashboard#all-appointments');
+                    nav(`/doctor/appointments/${id}/documents`);
                   }
                   setNotifs((prev) => prev.filter((x) => x.id !== n.id));
                 } catch (_) {}

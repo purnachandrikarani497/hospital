@@ -36,8 +36,18 @@ if (typeof window !== "undefined") {
     try {
       const msg = args.map((a) => (a && a.message) ? a.message : String(a)).join(" ");
       if (roMatch(msg)) return;
+      if (msg.includes("MIME type ('text/html')") || msg.includes("Refused to apply style")) return;
     } catch (_) {}
     origConsoleError(...args);
+  };
+
+  const origConsoleWarn = console.warn.bind(console);
+  console.warn = (...args) => {
+    try {
+      const msg = args.map((a) => (a && a.message) ? a.message : String(a)).join(" ");
+      if (msg.includes("cdn.tailwindcss.com") || (msg.includes("Tailwind CSS") && msg.includes("production"))) return;
+    } catch (_) {}
+    origConsoleWarn(...args);
   };
 
   const NativeRO = window.ResizeObserver;
@@ -80,8 +90,6 @@ if (typeof window !== "undefined") {
           return id.includes('overlay') || cls.includes('overlay');
         });
         els.forEach((n) => { n.style.display = 'none'; });
-        const iframes = Array.from(document.querySelectorAll('iframe'));
-        iframes.forEach((f) => { try { f.style.display = 'none'; } catch(_) {} });
       } catch(_) {}
     };
     hideOverlay();
