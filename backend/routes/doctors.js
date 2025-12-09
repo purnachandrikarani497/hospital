@@ -72,6 +72,7 @@ let profile = await DoctorProfile.findOne({ user: user._id });
 if (!profile) profile = new DoctorProfile({ user: user._id, ...payload });
 else Object.assign(profile, payload);
 await profile.save();
+profile = await DoctorProfile.findById(profile._id).populate('user', '-passwordHash');
 res.json(profile);
 });
 
