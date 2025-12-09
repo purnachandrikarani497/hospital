@@ -133,6 +133,13 @@ function Header() {
             return next;
           });
           try { localStorage.setItem('lastChatApptId', String(apptId || '')); } catch(_) {}
+          try {
+            const id = String(Date.now()) + String(Math.random());
+            const text = 'New message from doctor';
+            const apptIdStr = String(apptId || '');
+            setNotifs((prev) => [{ id, text, type: 'chat', apptId: apptIdStr }, ...prev].slice(0, 4));
+            setTimeout(() => { setNotifs((prev) => prev.filter((n) => n.id !== id)); }, 6000);
+          } catch(_) {}
         } catch(_) {}
       };
       chan.onmessage = onMsg;

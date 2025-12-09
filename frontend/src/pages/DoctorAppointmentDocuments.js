@@ -31,20 +31,25 @@ export default function DoctorAppointmentDocuments() {
         const wrMsgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || "[]");
         const wrF = JSON.parse(localStorage.getItem(`wr_${id}_files`) || "[]");
         const fuF = JSON.parse(localStorage.getItem(`fu_${id}_files`) || "[]");
-        const prevAny = JSON.parse(localStorage.getItem(`wr_${id}_prevpres`) || "[]");
         const wrS = String(localStorage.getItem(`wr_${id}_symptoms`) || "");
         const fuS = String(localStorage.getItem(`fu_${id}_symptoms`) || "");
         const baseMsgs = Array.isArray(wrMsgs) ? wrMsgs : [];
-        const allFiles = ([])
-          .concat(Array.isArray(wrF) ? wrF : [], Array.isArray(fuF) ? fuF : [], Array.isArray(prevAny) ? prevAny : []);
-        const cleanFiles = (Array.isArray(allFiles) ? allFiles : [])
-          .filter((x) => {
-            const name = String(x?.name || '').toLowerCase();
-            const by = String(x?.by || '').toLowerCase();
-            if (by === 'doctor') return false;
-            if (name.includes('prescription')) return false;
-            return true;
-          });
+        const merged = ([]).concat(Array.isArray(wrF) ? wrF : [], Array.isArray(fuF) ? fuF : []);
+        const uniq = [];
+        const seen = new Set();
+        for (const x of Array.isArray(merged) ? merged : []) {
+          const key = `${String(x?.url || '')}|${String(x?.name || '')}`;
+          if (!key || seen.has(key)) continue;
+          seen.add(key);
+          uniq.push(x);
+        }
+        const cleanFiles = uniq.filter((x) => {
+          const name = String(x?.name || '').toLowerCase();
+          const by = String(x?.by || '').toLowerCase();
+          if (by === 'doctor') return false;
+          if (name.includes('prescription')) return false;
+          return true;
+        });
         setChat(baseMsgs.map((it) => (typeof it === 'string' ? it : String(it?.text || ''))).filter(Boolean));
         setFiles(cleanFiles);
         setSymptoms(wrS || fuS || "");

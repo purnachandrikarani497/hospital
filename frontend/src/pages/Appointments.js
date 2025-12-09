@@ -517,12 +517,16 @@ export default function Appointments() {
         setDetSymptoms(s);
         setDetSummary(sum);
       } catch(_) {}
-      const files = JSON.parse(localStorage.getItem(`wr_${id}_prevpres`) || '[]');
-      setDetPrevFiles(Array.isArray(files) ? files : []);
       const doctorFiles = JSON.parse(localStorage.getItem(`wr_${id}_files`) || '[]');
-      if (Array.isArray(doctorFiles) && doctorFiles.length && (!files || files.length === 0)) {
-        setDetPrevFiles(doctorFiles);
+      const seen = new Set();
+      const arr = [];
+      for (const x of Array.isArray(doctorFiles) ? doctorFiles : []) {
+        const key = `${String(x?.url || '')}|${String(x?.name || '')}`;
+        if (!key || seen.has(key)) continue;
+        seen.add(key);
+        arr.push(x);
       }
+      setDetPrevFiles(arr);
       const msgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || '[]');
       const normMsgs = (Array.isArray(msgs) ? msgs : []).map((it) => (typeof it === 'string' ? it : String(it?.text || ''))).filter(Boolean);
       setDetChat(normMsgs);
@@ -1403,7 +1407,6 @@ export default function Appointments() {
                     const nextFiles = [...detPrevFiles, ...newItems];
                     setDetPrevFiles(nextFiles);
                     const id = String(detailsAppt._id || detailsAppt.id);
-                    try { localStorage.setItem(`wr_${id}_prevpres`, JSON.stringify(nextFiles)); } catch(_) {}
                     try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
                     try { socketRef.current && socketRef.current.emit('chat:new', { apptId: id, actor: 'patient', kind: 'report', text: `Report uploaded (${files.length})` }); } catch(_) {}
                     e.target.value = '';
@@ -1428,7 +1431,6 @@ export default function Appointments() {
                               const nextFiles = detPrevFiles.filter((_, i) => i !== idx);
                               setDetPrevFiles(nextFiles);
                               const id = String(detailsAppt._id || detailsAppt.id);
-                              try { localStorage.setItem(`wr_${id}_prevpres`, JSON.stringify(nextFiles)); } catch(_) {}
                               try { localStorage.setItem(`wr_${id}_files`, JSON.stringify(nextFiles)); } catch(_) {}
                             }}
                             className="px-2 py-1 rounded-md border border-red-600 text-red-700 text-sm"
