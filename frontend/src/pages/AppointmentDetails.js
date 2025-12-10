@@ -33,7 +33,8 @@ export default function AppointmentDetails() {
         } catch (_) {}
       try {
         const files = JSON.parse(localStorage.getItem(`wr_${id}_files`) || "[]");
-        const merged = Array.isArray(files) ? files : [];
+        const server = Array.isArray(data?.patientReports) ? data.patientReports : [];
+        const merged = [...(Array.isArray(files) ? files : []), ...server];
         const seen = new Set();
         const arr = [];
         for (const x of merged) {
@@ -92,6 +93,7 @@ export default function AppointmentDetails() {
         date: d.date,
         startTime: d.startTime,
         doctorId: String(d.doctor?._id || d.doctor || ""),
+        reports: detPrevFiles,
       });
       try {
         localStorage.setItem(`wr_${id}_symptoms`, String(detSymptoms || ""));
@@ -108,6 +110,7 @@ export default function AppointmentDetails() {
             date: d.date,
             startTime: d.startTime,
             doctorId: String(d.doctor?._id || d.doctor || ""),
+            reports: detPrevFiles,
           });
           try {
             localStorage.setItem(`wr_${id}_symptoms`, String(detSymptoms || ""));

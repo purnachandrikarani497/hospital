@@ -17,6 +17,10 @@ const appointmentSchema = new mongoose.Schema({
   prescriptionText: { type: String },
   patientSymptoms: { type: String },
   patientSummary: { type: String },
+  patientReports: [{
+    name: { type: String },
+    url: { type: String }
+  }],
   ratingStars: { type: Number, min: 1, max: 5 },
   ratingText: { type: String },
   ratedAt: { type: Date }

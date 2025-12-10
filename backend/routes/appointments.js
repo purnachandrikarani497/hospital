@@ -283,7 +283,7 @@ router.put('/:id/rate', authenticate, async (req, res) => {
 // Patient adds or updates details for online consultation
 router.put("/:id/patient-details", authenticate, async (req, res) => {
   const { id } = req.params;
-  const { symptoms, summary, date, startTime, doctorId } = req.body || {};
+  const { symptoms, summary, date, startTime, doctorId, reports } = req.body || {};
   let appt = null;
   try {
     if (id && id !== 'undefined') {
@@ -300,13 +300,29 @@ router.put("/:id/patient-details", authenticate, async (req, res) => {
   if (!appt) return res.status(404).json({ message: "Appointment not found" });
   appt.patientSymptoms = typeof symptoms === 'string' ? symptoms : appt.patientSymptoms;
   appt.patientSummary = typeof summary === 'string' ? summary : appt.patientSummary;
+  try {
+    if (Array.isArray(reports)) {
+      const clean = [];
+      const seen = new Set();
+      for (const r of reports) {
+        const name = typeof r?.name === 'string' ? r.name : '';
+        const url = typeof r?.url === 'string' ? r.url : '';
+        if (!name || !url) continue;
+        const key = `${name}|${url}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        clean.push({ name, url });
+      }
+      appt.patientReports = clean.slice(0, 20);
+    }
+  } catch (_) {}
   await appt.save();
   res.json({ ok: true });
 });
 
 // Fallback without id
 router.put("/patient-details", authenticate, async (req, res) => {
-  const { symptoms, summary, date, startTime, doctorId } = req.body || {};
+  const { symptoms, summary, date, startTime, doctorId, reports } = req.body || {};
   const filter = { patient: req.user._id };
   if (doctorId) filter.doctor = doctorId;
   if (date) filter.date = String(date);
@@ -315,6 +331,22 @@ router.put("/patient-details", authenticate, async (req, res) => {
   if (!appt) return res.status(404).json({ message: "Appointment not found" });
   appt.patientSymptoms = typeof symptoms === 'string' ? symptoms : appt.patientSymptoms;
   appt.patientSummary = typeof summary === 'string' ? summary : appt.patientSummary;
+  try {
+    if (Array.isArray(reports)) {
+      const clean = [];
+      const seen = new Set();
+      for (const r of reports) {
+        const name = typeof r?.name === 'string' ? r.name : '';
+        const url = typeof r?.url === 'string' ? r.url : '';
+        if (!name || !url) continue;
+        const key = `${name}|${url}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        clean.push({ name, url });
+      }
+      appt.patientReports = clean.slice(0, 20);
+    }
+  } catch (_) {}
   await appt.save();
   res.json({ ok: true });
 });

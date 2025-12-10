@@ -22,8 +22,10 @@ export default function DoctorAppointmentDocuments() {
     const load = async () => {
       setLoading(true);
       setError("");
+      let fetched = null;
       try {
         const { data } = await API.get(`/appointments/${id}`);
+        fetched = data;
         setAppt(data);
       } catch (e) {
         setError(e.response?.data?.message || e.message || "Failed to load appointment");
@@ -32,10 +34,11 @@ export default function DoctorAppointmentDocuments() {
         const wrMsgs = JSON.parse(localStorage.getItem(`wr_${id}_chat`) || "[]");
         const wrF = JSON.parse(localStorage.getItem(`wr_${id}_files`) || "[]");
         const fuF = JSON.parse(localStorage.getItem(`fu_${id}_files`) || "[]");
+        const serverF = Array.isArray(fetched?.patientReports) ? fetched.patientReports : [];
         const wrS = String(localStorage.getItem(`wr_${id}_symptoms`) || "");
         const fuS = String(localStorage.getItem(`fu_${id}_symptoms`) || "");
         const baseMsgs = Array.isArray(wrMsgs) ? wrMsgs : [];
-        const merged = ([]).concat(Array.isArray(wrF) ? wrF : [], Array.isArray(fuF) ? fuF : []);
+        const merged = ([]).concat(Array.isArray(wrF) ? wrF : [], Array.isArray(fuF) ? fuF : [], Array.isArray(serverF) ? serverF : []);
         const uniq = [];
         const seen = new Set();
         for (const x of Array.isArray(merged) ? merged : []) {

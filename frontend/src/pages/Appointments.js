@@ -520,9 +520,11 @@ export default function Appointments() {
         setDetSummary(sum);
       } catch(_) {}
       const doctorFiles = JSON.parse(localStorage.getItem(`wr_${id}_files`) || '[]');
+      const serverFiles = Array.isArray(detailsAppt?.patientReports) ? detailsAppt.patientReports : [];
+      const mergedFiles = [...(Array.isArray(doctorFiles) ? doctorFiles : []), ...serverFiles];
       const seen = new Set();
       const arr = [];
-      for (const x of Array.isArray(doctorFiles) ? doctorFiles : []) {
+      for (const x of mergedFiles) {
         const key = `${String(x?.url || '')}|${String(x?.name || '')}`;
         if (!key || seen.has(key)) continue;
         seen.add(key);
@@ -1454,7 +1456,8 @@ export default function Appointments() {
                         summary: detSummary,
                         date: detailsAppt.date,
                         startTime: detailsAppt.startTime,
-                        doctorId: String(detailsAppt.doctor?._id || detailsAppt.doctor || '')
+                        doctorId: String(detailsAppt.doctor?._id || detailsAppt.doctor || ''),
+                        reports: detPrevFiles
                       });
                       setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, patientSymptoms: detSymptoms, patientSummary: detSummary } : x)));
                       try {
@@ -1470,7 +1473,8 @@ export default function Appointments() {
                             summary: detSummary,
                             date: detailsAppt.date,
                             startTime: detailsAppt.startTime,
-                            doctorId: String(detailsAppt.doctor?._id || detailsAppt.doctor || '')
+                            doctorId: String(detailsAppt.doctor?._id || detailsAppt.doctor || ''),
+                            reports: detPrevFiles
                           });
                           const id = String(detailsAppt._id || detailsAppt.id);
                           setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, patientSymptoms: detSymptoms, patientSummary: detSummary } : x)));
