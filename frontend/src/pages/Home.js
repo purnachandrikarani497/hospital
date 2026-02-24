@@ -5,7 +5,8 @@ import API from "../api";
 
 export default function Home() {
   const FALLBACK = "";
-  const LOCAL = (process.env.PUBLIC_URL || "") + "/uploads/Screenshot 2025-12-03 145101.png";
+const LOCAL = (process.env.PUBLIC_URL || "") + "/uploads/Screenshot-2025-12-10-110657.png";
+
   const CARD_FALLBACK = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
   const [heroSrc, setHeroSrc] = useState(FALLBACK);
   const [list, setList] = useState([]);
