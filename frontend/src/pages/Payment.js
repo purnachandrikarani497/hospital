@@ -31,15 +31,32 @@ export default function Payment() {
   const pay = async () => {
     if (!appt) return;
     setLoading(true);
+
+    const base = Number(appt.fee || 0);
+    const extra = includeServiceFee ? 20 : 0;
+    const totalAmount = base + extra;
+
+    // Handle 0 amount payment
+    if (totalAmount <= 0) {
+      try {
+        await API.post(`/appointments/${id}/pay`, { razorpayPaymentId: "free_appointment" });
+        alert("Appointment confirmed.");
+        nav("/appointments");
+      } catch (err) {
+        alert(err.response?.data?.message || err.message);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     const key = (localStorage.getItem('razorpay_key_id') || process.env.REACT_APP_RAZORPAY_KEY_ID || process.env.REACT_APP_RAZORPAY_KEY || "").trim() || "rzp_test_1DP5mmOlF5G5ag";
     if (!sdkReady || !window.Razorpay) {
       alert("Payment system not ready. Please try again.");
       setLoading(false);
       return;
     }
-    const base = Number(appt.fee || 0);
-    const extra = includeServiceFee ? 20 : 0;
-    const amount = (base + extra) * 100;
+    const amount = totalAmount * 100;
     const options = {
       key,
       amount,
