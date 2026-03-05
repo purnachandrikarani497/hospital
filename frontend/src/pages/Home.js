@@ -265,9 +265,12 @@ export default function Home() {
                 Empowering lives through revolutionary healthcare solutions that blend cutting-edge technology with heartfelt compassion.
               </p>
 
-              <div className="animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+              <div class="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
                 <Link to="/search" className="btn-gradient animate-bounce-in shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                  Book Appointment
+                  Find Doctors
+                </Link>
+                <Link to="/contact" className="btn-gradient animate-bounce-in shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                  Contact Us
                 </Link>
               </div>
             </div>

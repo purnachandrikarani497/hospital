@@ -67,10 +67,6 @@ export default function About() {
                 </h1>
               </div>
               <p className="mt-4 text-slate-600 max-w-xl">Discover verified doctors, book appointments in seconds, and get secure online consultations with e‑prescriptions.</p>
-              <div className="mt-6 flex flex-col sm:flex-row gap-3">
-                <a href="/search" className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold shadow-xl hover:from-blue-700 hover:to-purple-700 transition text-center">Find Doctors</a>
-                <a href="/contact" className="px-6 py-3 rounded-xl bg-white text-slate-800 border-2 border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition font-semibold text-center">Contact Us</a>
-              </div>
               <div className="mt-6 flex items-center gap-4 text-xs text-slate-500">
                 <span className="inline-flex items-center gap-1"><svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>HIPAA‑style privacy</span>
                 <span className="inline-flex items-center gap-1"><svg className="w-4 h-4 text-green-600" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>Secure payments</span>
@@ -147,7 +143,10 @@ export default function About() {
             <div className="text-xl sm:text-2xl md:text-3xl font-extrabold">Ready to get started?</div>
             <div className="text-indigo-100 mt-2">Search a specialist and book your appointment now.</div>
           </div>
-          <a href="/search" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Find Doctors</a>
+          <div className="flex items-center gap-4">
+            <a href="/search" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Find Doctors</a>
+            <a href="/contact" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Contact Us</a>
+          </div>
         </div>
       </section>
     </div>
