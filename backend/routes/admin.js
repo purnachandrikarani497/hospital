@@ -127,8 +127,8 @@ router.post('/doctors/:id/reject', authenticate, authorize(['admin']), async (re
 // List all appointments (admin)
 router.get('/appointments', authenticate, authorize(['admin']), async (req, res) => {
   const list = await Appointment.find({})
-    .populate('doctor', 'name')
-    .populate('patient', 'name photoBase64 birthday gender')
+    .populate({ path: 'doctor', select: 'name' })
+    .populate({ path: 'patient', select: 'name photoBase64 birthday gender age' })
     .sort({ date: -1, startTime: -1 });
   res.json(list);
 });
