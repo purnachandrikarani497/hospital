@@ -469,11 +469,11 @@ export default function Home() {
                 <div className="space-y-2 text-slate-700 text-sm">
                   <div className="flex items-center gap-2">
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M2 3h5l2 5-3 2a16 16 0 008 8l2-3 5 2v5a2 2 0 01-2 2h-1C9.163 24 0 14.837 0 3V2a2 2 0 012-2h0z"/></svg>
-                    <span>+0-000-000-000</span>
+                    <span>+919876543210</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M4 4h16v16H4z"/><path strokeWidth="2" d="M22 6l-10 7L2 6"/></svg>
-                    <span>greatstackdev@gmail.com</span>
+                    <span>hospozen@gmail.com</span>
                   </div>
                 </div>
               </div>

@@ -640,8 +640,8 @@ export default function DoctorDetails() {
             </div>
             <div>
               <div className="font-semibold text-slate-900 mb-2 uppercase tracking-wide">Get in touch</div>
-              <div className="flex items-center gap-2 text-slate-700 text-sm"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M2 3h5l2 5-3 2a16 16 0 008 8l2-3 5 2v5a2 2 0 01-2 2h-1C9.163 24 0 14.837 0 3V2a2 2 0 012-2h0z"/></svg> +0-000-000-000</div>
-              <div className="flex items-center gap-2 text-slate-700 text-sm"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M4 4h16v16H4z"/><path strokeWidth="2" d="M22 6l-10 7L2 6"/></svg> greatstackdev@gmail.com</div>
+              <div className="flex items-center gap-2 text-slate-700 text-sm"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M2 3h5l2 5-3 2a16 16 0 008 8l2-3 5 2v5a2 2 0 01-2 2h-1C9.163 24 0 14.837 0 3V2a2 2 0 012-2h0z"/></svg> +91 9876543210</div>
+              <div className="flex items-center gap-2 text-slate-700 text-sm"><svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeWidth="2" d="M4 4h16v16H4z"/><path strokeWidth="2" d="M22 6l-10 7L2 6"/></svg>hospozen@gmail.com</div>
             </div>
           </div>
           <hr className="my-6 border-slate-200" />
