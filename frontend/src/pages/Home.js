@@ -5,7 +5,7 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import API from "../api";
 
 export default function Home() {
-  const FALLBACK = "";
+  const FALLBACK = "https://www.ecotowndiagnostics.com/wp-content/uploads/2024/06/818dce83d6.jpg";
   const LOCAL = (process.env.PUBLIC_URL || "") + "/uploads/Screenshot 2025-12-03 145101.png";
   const CARD_FALLBACK = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
   const [heroSrc, setHeroSrc] = useState(FALLBACK);
