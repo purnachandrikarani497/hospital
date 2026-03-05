@@ -480,7 +480,7 @@ export default function Home() {
             </div>
             <hr className="my-8 border-slate-200" />
             <div className="text-center text-slate-600 text-sm animate-fade-in" style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}>
-              © 2024 HospoZen. All rights reserved. | Powered by Innovation
+              © 2026 HospoZen. All rights reserved. | Powered by Innovation
             </div>
           </div>
         </div>

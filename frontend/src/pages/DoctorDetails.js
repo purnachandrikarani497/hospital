@@ -645,7 +645,7 @@ export default function DoctorDetails() {
             </div>
           </div>
           <hr className="my-6 border-slate-200" />
-          <div className="text-center text-slate-600 text-sm">© 2024 HospoZen. All rights reserved. | Powered by Innovation</div>
+          <div className="text-center text-slate-600 text-sm">© 2026 HospoZen. All rights reserved. | Powered by Innovation</div>
         </div>
       </section>
       )}
