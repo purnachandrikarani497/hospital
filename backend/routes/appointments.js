@@ -139,25 +139,38 @@ router.post('/:id/meet-link/generate', authenticate, async (req, res) => {
 
 router.post("/:id/order", authenticate, async (req, res) => {
     const { id } = req.params;
+    const { includeServiceFee } = req.body;
     const appt = await Appointment.findById(id);
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
     if (String(appt.patient) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
 
+    const rzpId = (process.env.RAZORPAY_KEY_ID || "").trim();
+    const rzpSecret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
+
+    if (!rzpId || !rzpSecret) {
+      return res.status(500).json({ message: "Razorpay keys not configured on server" });
+    }
+
     const instance = new Razorpay({
-        key_id: process.env.RAZORPAY_KEY_ID,
-        key_secret: process.env.RAZORPAY_KEY_SECRET,
+        key_id: rzpId,
+        key_secret: rzpSecret,
     });
 
+    const fee = Number(appt.fee || 0);
+    const serviceFee = includeServiceFee ? 20 : 0;
+    const totalAmount = fee + serviceFee;
+
     const options = {
-        amount: appt.fee * 100,  // amount in the smallest currency unit
+        amount: Math.round(totalAmount * 100),  // amount in the smallest currency unit (paise)
         currency: "INR",
         receipt: `receipt_#${appt._id}`
     };
 
     try {
         const order = await instance.orders.create(options);
-        res.json(order);
+        res.json({ ...order, key: rzpId });
     } catch (error) {
+        console.error("Razorpay order creation error:", error);
         res.status(500).json({ message: error.message });
     }
 });
@@ -171,9 +184,11 @@ router.post("/:id/pay", authenticate, async (req, res) => {
     if (String(appt.patient) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
     if (appt.paymentStatus === "PAID") return res.json(appt);
 
+    const rzpSecret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
+
     try {
         const text = razorpayOrderId + '|' + razorpayPaymentId;
-        const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+        const hmac = crypto.createHmac('sha256', rzpSecret);
         hmac.update(text);
         const digest = hmac.digest('hex');
 

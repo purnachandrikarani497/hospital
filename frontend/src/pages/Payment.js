@@ -53,14 +53,17 @@ export default function Payment() {
     try {
         const { data: order } = await API.post(`/appointments/${id}/order`, { includeServiceFee });
 
-        const key = (localStorage.getItem('razorpay_key_id') || process.env.REACT_APP_RAZORPAY_KEY_ID || process.env.REACT_APP_RAZORPAY_KEY || "").trim() || "rzp_test_1DP5mmOlF5G5ag";
         if (!sdkReady || !window.Razorpay) {
           alert("Payment system not ready. Please try again.");
           setLoading(false);
           return;
         }
+
+        // Use key from order (sent by backend) or fall back to test key if missing
+        const rzpKey = order.key || "rzp_test_RQ739na1YxOpy5";
+
         const options = {
-          key,
+          key: rzpKey,
           amount: order.amount,
           currency: "INR",
           name: "HospoZen",
@@ -82,9 +85,9 @@ export default function Payment() {
             }
           },
           prefill: {
-            name: localStorage.getItem(`userNameById_${localStorage.getItem("userId")}`) || "",
-            email: localStorage.getItem(`userEmailById_${localStorage.getItem("userId")}`) || "",
-            contact: localStorage.getItem(`userPhoneById_${localStorage.getItem("userId")}`) || "",
+            name: localStorage.getItem(`userNameById_${localStorage.getItem("userId")}`) || "Patient",
+            email: localStorage.getItem(`userEmailById_${localStorage.getItem("userId")}`) || "patient@example.com",
+            contact: localStorage.getItem(`userPhoneById_${localStorage.getItem("userId")}`) || "9999999999",
           },
           theme: { color: "#4F46E5" },
           modal: { ondismiss: () => setLoading(false) }
