@@ -63,7 +63,7 @@ export default function Payment() {
         const rzpKey = order.key || "rzp_test_RQ739na1YxOpy5";
 
         const options = {
-          key: rzpKey,
+          key: "rzp_test_RQ739na1YxOpy5", // Force test key
           amount: order.amount,
           currency: "INR",
           name: "HospoZen",
