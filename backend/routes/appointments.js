@@ -8,6 +8,8 @@ const { sendMail } = require("../utils/mailer");
 const { createMeetLink } = require("../utils/meeting");
 const { notifyAppointmentConfirmed, notifyMeetingLink, notifySessionComplete, notifyPrescription, notifyAppointmentCancelled } = require('../utils/notify');
 const cloudinary = require('cloudinary').v2;
+const Razorpay = require('razorpay');
+const crypto = require('crypto');
 
 // -------------------------------
 // Get available slots for a doctor
@@ -135,43 +137,89 @@ router.post('/:id/meet-link/generate', authenticate, async (req, res) => {
   }
 });
 
-router.post("/:id/pay", authenticate, async (req, res) => {
+router.post("/:id/order", authenticate, async (req, res) => {
     const { id } = req.params;
     const appt = await Appointment.findById(id);
     if (!appt) return res.status(404).json({ message: "Appointment not found" });
     if (String(appt.patient) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
-    if (appt.paymentStatus === "PAID") return res.json(appt);
-    appt.paymentStatus = "PAID";
-    appt.status = "CONFIRMED";
-    if (appt.type === 'online' && !appt.meetingLink) {
-      try {
-        const link = await createMeetLink({ doctorId: appt.doctor, date: appt.date, startTime: appt.startTime, endTime: appt.endTime });
-        if (link) appt.meetingLink = link;
-      } catch (_) {}
-    }
-    await appt.save();
 
-  const populated = await Appointment.findById(id)
-      .populate("doctor", "name email")
-      .populate("patient", "name email");
+    const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
 
-    const when = `${populated.date} ${populated.startTime}-${populated.endTime}`;
-    const subject = "Appointment Confirmed";
-    const joinLine = populated.meetingLink ? `\nJoin: ${populated.meetingLink}` : "";
-    const textPatient = `Your appointment with ${populated.doctor.name} is confirmed for ${when}.${joinLine}`;
-    const textDoctor = `New appointment confirmed with ${populated.patient.name} for ${when}.${joinLine}`;
+    const options = {
+        amount: appt.fee * 100,  // amount in the smallest currency unit
+        currency: "INR",
+        receipt: `receipt_#${appt._id}`
+    };
+
     try {
-        if (populated.patient.email) await sendMail(populated.patient.email, subject, textPatient);
-        if (populated.doctor.email) await sendMail(populated.doctor.email, subject, textDoctor);
-    } catch (e) {}
+        const order = await instance.orders.create(options);
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
-  try {
-    const io = req.app.get('io');
-    if (io) io.emit('appointment:new', populated);
-  } catch (_) {}
-  try { await notifyAppointmentConfirmed(req.app, populated); } catch (_) {}
+router.post("/:id/pay", authenticate, async (req, res) => {
+    const { id } = req.params;
+    const { razorpayPaymentId, razorpayOrderId, razorpaySignature } = req.body;
 
-    res.json(populated);
+    const appt = await Appointment.findById(id);
+    if (!appt) return res.status(404).json({ message: "Appointment not found" });
+    if (String(appt.patient) !== String(req.user._id)) return res.status(403).json({ message: "Forbidden" });
+    if (appt.paymentStatus === "PAID") return res.json(appt);
+
+    try {
+        const text = razorpayOrderId + '|' + razorpayPaymentId;
+        const hmac = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET);
+        hmac.update(text);
+        const digest = hmac.digest('hex');
+
+        if (digest !== razorpaySignature) {
+            appt.paymentStatus = 'FAILED';
+            await appt.save();
+            return res.status(400).json({ message: "Payment verification failed" });
+        }
+
+        // --- Payment is verified, proceed with booking confirmation ---
+
+        appt.paymentStatus = "PAID";
+        appt.status = "CONFIRMED";
+        if (appt.type === 'online' && !appt.meetingLink) {
+          try {
+            const link = await createMeetLink({ doctorId: appt.doctor, date: appt.date, startTime: appt.startTime, endTime: appt.endTime });
+            if (link) appt.meetingLink = link;
+          } catch (_) {}
+        }
+        await appt.save();
+
+      const populated = await Appointment.findById(id)
+          .populate("doctor", "name email")
+          .populate("patient", "name email");
+
+        const when = `${populated.date} ${populated.startTime}-${populated.endTime}`;
+        const subject = "Appointment Confirmed";
+        const joinLine = populated.meetingLink ? `\nJoin: ${populated.meetingLink}` : "";
+        const textPatient = `Your appointment with ${populated.doctor.name} is confirmed for ${when}.${joinLine}`;
+        const textDoctor = `New appointment confirmed with ${populated.patient.name} for ${when}.${joinLine}`;
+        try {
+            if (populated.patient.email) await sendMail(populated.patient.email, subject, textPatient);
+            if (populated.doctor.email) await sendMail(populated.doctor.email, subject, textDoctor);
+        } catch (e) {}
+
+      try {
+        const io = req.app.get('io');
+        if (io) io.emit('appointment:new', populated);
+      } catch (_) {}
+      try { await notifyAppointmentConfirmed(req.app, populated); } catch (_) {}
+
+        res.json(populated);
+    } catch (error) {
+        console.error("Payment processing error:", error);
+        res.status(500).json({ message: error.message || "Payment processing error" });
+    }
 });
 
 router.get("/today", authenticate, async (req, res) => {

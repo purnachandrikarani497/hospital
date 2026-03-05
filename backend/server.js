@@ -42,6 +42,10 @@ app.use(cors(corsConfig));
 app.options('*', cors(corsConfig));
 app.use(helmet());
 app.use(compression({ threshold: 0 }));
+app.use((req, res, next) => {
+  res.setHeader('Permissions-Policy', 'accelerometer=*, camera=*, geolocation=*, gyroscope=*, magnetometer=*, microphone=*, payment=*, usb=*');
+  next();
+});
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 

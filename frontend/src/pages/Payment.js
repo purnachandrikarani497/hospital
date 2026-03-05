@@ -50,44 +50,55 @@ export default function Payment() {
       return;
     }
 
-    const key = (localStorage.getItem('razorpay_key_id') || process.env.REACT_APP_RAZORPAY_KEY_ID || process.env.REACT_APP_RAZORPAY_KEY || "").trim() || "rzp_test_1DP5mmOlF5G5ag";
-    if (!sdkReady || !window.Razorpay) {
-      alert("Payment system not ready. Please try again.");
-      setLoading(false);
-      return;
-    }
-    const amount = totalAmount * 100;
-    const options = {
-      key,
-      amount,
-      currency: "INR",
-      name: "HospoZen",
-      description: `Appointment with ${appt.doctor?.name || "Doctor"}`,
-      handler: async (response) => {
-        try {
-          await API.post(`/appointments/${id}/pay`, { razorpayPaymentId: response.razorpay_payment_id });
-          alert("Payment successful. Appointment confirmed.");
-          nav("/appointments");
-        } catch (err) {
-          alert(err.response?.data?.message || err.message);
-        } finally {
+    try {
+        const { data: order } = await API.post(`/appointments/${id}/order`, { includeServiceFee });
+
+        const key = (localStorage.getItem('razorpay_key_id') || process.env.REACT_APP_RAZORPAY_KEY_ID || process.env.REACT_APP_RAZORPAY_KEY || "").trim() || "rzp_test_1DP5mmOlF5G5ag";
+        if (!sdkReady || !window.Razorpay) {
+          alert("Payment system not ready. Please try again.");
           setLoading(false);
+          return;
         }
-      },
-      prefill: {
-        name: localStorage.getItem(`userNameById_${localStorage.getItem("userId")}`) || "",
-        email: localStorage.getItem(`userEmailById_${localStorage.getItem("userId")}`) || "",
-        contact: localStorage.getItem(`userPhoneById_${localStorage.getItem("userId")}`) || "",
-      },
-      theme: { color: "#4F46E5" },
-      modal: { ondismiss: () => setLoading(false) }
-    };
-    const rzp = new window.Razorpay(options);
-    rzp.on("payment.failed", () => {
-      alert("Payment failed. Please try again.");
-      setLoading(false);
-    });
-    rzp.open();
+        const options = {
+          key,
+          amount: order.amount,
+          currency: "INR",
+          name: "HospoZen",
+          description: `Appointment with ${appt.doctor?.name || "Doctor"}`,
+          order_id: order.id,
+          handler: async (response) => {
+            try {
+              await API.post(`/appointments/${id}/pay`, { 
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpaySignature: response.razorpay_signature
+               });
+              alert("Payment successful. Appointment confirmed.");
+              nav("/appointments");
+            } catch (err) {
+              alert(err.response?.data?.message || err.message);
+            } finally {
+              setLoading(false);
+            }
+          },
+          prefill: {
+            name: localStorage.getItem(`userNameById_${localStorage.getItem("userId")}`) || "",
+            email: localStorage.getItem(`userEmailById_${localStorage.getItem("userId")}`) || "",
+            contact: localStorage.getItem(`userPhoneById_${localStorage.getItem("userId")}`) || "",
+          },
+          theme: { color: "#4F46E5" },
+          modal: { ondismiss: () => setLoading(false) }
+        };
+        const rzp = new window.Razorpay(options);
+        rzp.on("payment.failed", () => {
+          alert("Payment failed. Please try again.");
+          setLoading(false);
+        });
+        rzp.open();
+    } catch (error) {
+        alert(error.response?.data?.message || error.message);
+        setLoading(false);
+    }
   };
 
   return (
