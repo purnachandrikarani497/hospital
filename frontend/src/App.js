@@ -204,6 +204,10 @@ function Header({ onSupportOpen }) {
             <nav className="hidden lg:flex items-center space-x-10">
               {(() => {
                 const p = location.pathname;
+                const s = location.search;
+                const isPres = p.startsWith("/appointments") && s.includes("view=prescriptions");
+                const isAppts = p.startsWith("/appointments") && !s.includes("view=prescriptions");
+
                 const linkClass = (active) =>
                   active
                     ? "relative px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
@@ -221,13 +225,13 @@ function Header({ onSupportOpen }) {
                     </Link>
                     {token ? (
                       <>
-                        <Link to="/appointments" className={linkClass(p.startsWith("/appointments"))}>
+                        <Link to="/appointments" className={linkClass(isAppts)}>
                           <span className="relative z-10">My Appointments</span>
-                          {p.startsWith("/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                          {isAppts && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                         </Link>
-                        <Link to="/appointments?view=prescriptions" className={linkClass(p.startsWith("/appointments?view=prescriptions"))}>
+                        <Link to="/appointments?view=prescriptions" className={linkClass(isPres)}>
                           <span className="relative z-10">Prescriptions</span>
-                          {p.startsWith("/appointments?view=prescriptions") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                          {isPres && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                         </Link>
                       </>
                     ) : (
@@ -578,25 +582,40 @@ function Header({ onSupportOpen }) {
         {mobileOpen && (
           <div className="lg:hidden bg-white/98 backdrop-blur-md border-t border-blue-200/50 py-6">
             <nav className="flex flex-col space-y-4 px-6">
-              {[
-                { path: '/', label: 'Home' },
-                { path: '/search', label: 'Book an appoinment' },
-                { path: '/about', label: 'About' },
-                { path: '/contact', label: 'Contact' }
-              ].map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
-                    location.pathname === item.path
-                      ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 shadow-sm'
-                      : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 hover:scale-105'
-                  }`}
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+              {(() => {
+                const p = location.pathname;
+                const s = location.search;
+                const isPres = p.startsWith("/appointments") && s.includes("view=prescriptions");
+                const isAppts = p.startsWith("/appointments") && !s.includes("view=prescriptions");
+
+                const items = [
+                  { path: '/', label: 'Home', active: p === '/' },
+                  { path: '/search', label: 'Book an appoinment', active: p.startsWith('/search') }
+                ];
+
+                if (token) {
+                  items.push({ path: '/appointments', label: 'My Appointments', active: isAppts });
+                  items.push({ path: '/appointments?view=prescriptions', label: 'Prescriptions', active: isPres });
+                } else {
+                  items.push({ path: '/about', label: 'About', active: p.startsWith('/about') });
+                  items.push({ path: '/contact', label: 'Contact', active: p.startsWith('/contact') });
+                }
+
+                return items.map((item) => (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                      item.active
+                        ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 shadow-sm'
+                        : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 hover:scale-105'
+                    }`}
+                    onClick={() => setMobileOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                ));
+              })()}
             </nav>
 
             {/* Mobile Auth Buttons */}
@@ -644,6 +663,7 @@ function App() {
       link.setAttribute('href', href || '');
     };
     const path = location.pathname;
+    const s = location.search;
     const origin = window.location.origin || '';
     const url = origin + path + (location.search || '');
     const metaByPath = () => {
@@ -652,7 +672,14 @@ function App() {
       if (path.startsWith('/contact')) return { title: 'Contact HospoZen | Support', desc: 'Get support and contact the HospoZen team.', keys: 'contact hospozen, support, help' };
       if (path.startsWith('/search')) return { title: 'Book an appoinment by Specialization | HospoZen', desc: 'Search and filter doctors by specialization, experience, and ratings.', keys: 'Book an appoinment, specializations, doctor search, ratings' };
       if (path.startsWith('/doctor/')) return { title: 'Doctor Profile | HospoZen', desc: 'View doctor details, specialization, experience, and book an appointment.', keys: 'doctor profile, book appointment, specialization' };
-      if (path.startsWith('/appointments')) return { title: 'My Appointments | HospoZen', desc: 'Manage upcoming and past appointments securely.', keys: 'appointments, patient dashboard, manage bookings' };
+      if (path.startsWith('/appointments')) {
+        const isPres = s.includes('view=prescriptions');
+        return {
+          title: isPres ? 'Prescriptions | HospoZen' : 'My Appointments | HospoZen',
+          desc: isPres ? 'View and access your prescriptions securely.' : 'Manage upcoming and past appointments securely.',
+          keys: isPres ? 'prescriptions, healthcare records' : 'appointments, patient dashboard, manage bookings'
+        };
+      }
       if (path.startsWith('/pay')) return { title: 'Secure Payment | HospoZen', desc: 'Complete your consultation payment securely.', keys: 'payment, secure checkout, consultation' };
       if (path.startsWith('/login')) return { title: 'Login | HospoZen', desc: 'Access your HospoZen account.', keys: 'login, account access' };
       if (path.startsWith('/register')) return { title: 'Create Account | HospoZen', desc: 'Register a new account on HospoZen.', keys: 'register, sign up, create account' };
@@ -719,7 +746,7 @@ function App() {
           <Route path="/doctor/appointments/:id/documents" element={<RequireRole role="doctor"><DoctorAppointmentDocuments /></RequireRole>} />
           <Route path="/doctor/appointments/:id/followup" element={<RequireRole role="doctor"><FollowUpDetails actor="doctor" backTo="/doctor/appointments" /></RequireRole>} />
           <Route path="/doctor/profile" element={<RequireRole role="doctor"><DoctorProfile /></RequireRole>} />
-          <Route path="/prescription/:id" element={<RequireRole role="doctor"><Prescription /></RequireRole>} />
+          <Route path="/prescription/:id" element={<Prescription />} />
           <Route path="/admin/doctors/pending" element={<RequireRole role="admin"><AdminPendingDoctors /></RequireRole>} />
           <Route path="/admin" element={<Navigate to="/login" />} />
           <Route path="/admin/dashboard" element={<RequireRole role="admin"><AdminDashboard /></RequireRole>} />

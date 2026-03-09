@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import API from "../api";
 
 export default function AdminSupport() {
+  const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +36,18 @@ export default function AdminSupport() {
   return (
     <div className="min-h-screen bg-gray-100 p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 mb-8">Support Requests</h1>
+        <div className="flex items-center gap-4 mb-8">
+          <button 
+            onClick={() => navigate("/admin/dashboard")}
+            className="flex items-center justify-center p-2 rounded-full hover:bg-gray-200 transition-colors bg-white shadow-sm border border-gray-200"
+            title="Back to Dashboard"
+          >
+            <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+          </button>
+          <h1 className="text-3xl font-bold text-gray-800">Support Requests</h1>
+        </div>
         {loading ? (
           <p>Loading...</p>
         ) : error ? (

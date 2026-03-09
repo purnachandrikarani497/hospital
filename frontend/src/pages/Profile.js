@@ -217,12 +217,6 @@
                      <div className="space-y-4">
                        <div className="flex items-center gap-3">
                          <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                         </svg>
-                         <div> Gender: <span className="text-slate-700 font-medium">{gender}</span></div>
-                       </div>
-                       <div className="flex items-center gap-3">
-                         <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a2 2 0 012-2h4a2 2 0 012 2v4m-6 4v10m0 0l-2-2m2 2l2-2m6-6v6a2 2 0 01-2 2H6a2 2 0 01-2-2v-6a2 2 0 012-2h8a2 2 0 012 2z" />
                          </svg>
                          <div> Date of Birth: <span className="text-slate-700 font-medium">{birthday}</span></div>
@@ -236,14 +230,6 @@
                      </div>
                    ) : (
                      <div className="grid sm:grid-cols-2 gap-4">
-                       <div>
-                         <label className="block text-sm font-semibold text-slate-700 mb-2">Gender</label>
-                         <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105">
-                           <option>Male</option>
-                           <option>Female</option>
-                           <option>Other</option>
-                         </select>
-                       </div>
                        <div>
                          <label className="block text-sm font-semibold text-slate-700 mb-2">Date of Birth</label>
                          <input type="date" max={new Date().toISOString().split('T')[0]} value={birthday} onChange={(e) => { const d = e.target.value; setBirthday(d); setAge(ageFromBirthday(d)); }} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 hover:scale-105" />

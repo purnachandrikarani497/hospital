@@ -61,6 +61,8 @@ export default function Prescription() {
         if (!ok) return;
         if (typ === 'PRINT') {
           setTimeout(() => { try { window.print(); } catch(_) {} }, 0);
+        } else if (typ === 'DOWNLOAD') {
+          downloadPdfDirect();
         }
       } catch(_) {}
     };
@@ -259,17 +261,19 @@ export default function Prescription() {
 
   return (
     <>
-    <div className="screen-only min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 pt-4 relative">
-      <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
-      <div className="max-w-4xl mx-auto px-4">
-        <div className="relative mb-10 text-center">
-          <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
-            Prescription
-            <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
-          </h2>
-          <button onClick={() => nav(-1)} className="absolute right-0 top-1/2 -translate-y-1/2 px-4 py-2 rounded-xl border-2 border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all duration-300">Back</button>
-        </div>
-        <div className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6">
+    <div className={`screen-only min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative ${isEmbed ? 'pt-0' : 'pt-4'}`}>
+      {!isEmbed && <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>}
+      <div className={`${isEmbed ? 'w-full' : 'max-w-4xl mx-auto px-4'}`}>
+        {!isEmbed && (
+          <div className="relative mb-10 text-center">
+            <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+              Prescription
+              <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+            </h2>
+            <button onClick={() => nav(-1)} className="absolute right-0 top-1/2 -translate-y-1/2 px-4 py-2 rounded-xl border-2 border-slate-200 font-bold text-slate-600 hover:bg-slate-50 transition-all duration-300">Back</button>
+          </div>
+        )}
+        <div className={`bg-white/90 backdrop-blur-sm shadow-2xl p-6 ${isEmbed ? 'rounded-none border-none' : 'rounded-2xl border border-white/30'}`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <h3 className="text-xl sm:text-2xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">{clinicName || 'Clinic/Hospital'}</h3>
             <div className="text-right">
@@ -302,7 +306,6 @@ export default function Prescription() {
               <div className="text-slate-900 font-semibold">Patient Details</div>
               <div className="text-sm text-slate-700">Name: <span className="text-slate-900">{patientName || '--'}</span></div>
               <div className="text-sm text-slate-700">Age: <span className="text-slate-900">{patientAge || '--'}</span></div>
-              <div className="text-sm text-slate-700">Gender: <span className="text-slate-900">{patientGender || '--'}</span></div>
               <div className="text-sm text-slate-700">Consultation Date: <span className="text-slate-900">{when || '--'}</span></div>
               <div className="text-sm text-slate-700">Appointment Type: <span className="text-slate-900">{apptType ? (apptType === 'online' ? 'Online' : 'Offline') : '--'}</span></div>
             </div>
@@ -657,7 +660,7 @@ export default function Prescription() {
           </div>
           <div className="presc-line"><span>Address:</span><span>{String(profile?.clinic?.address || '').trim()}</span></div>
           <div className="presc-row">
-            <div className="presc-line presc-half"><span>Age / Gender:</span><span>{[patientAge, patientGender].filter(Boolean).join(' / ') || '--'}</span></div>
+            <div className="presc-line presc-half"><span>Age:</span><span>{patientAge || '--'}</span></div>
             <div className="presc-line presc-half"><span>Diagnosis:</span><span>{parsed.diagnosis || ''}</span></div>
           </div>
         </div>

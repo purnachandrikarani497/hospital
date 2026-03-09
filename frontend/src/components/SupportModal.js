@@ -61,20 +61,22 @@ export default function SupportModal({ isOpen, onClose }) {
                   <input
                     type="text"
                     required
+                    maxLength={30}
                     placeholder="Full Name*"
                     className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 text-slate-800 font-semibold text-lg"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(e) => setName(e.target.value.replace(/[^a-zA-Z]/g, "").slice(0, 30))}
                   />
                 </div>
                 <div>
                   <input
                     type="tel"
                     required
+                    maxLength={10}
                     placeholder="Phone Number*"
                     className="w-full px-4 py-4 bg-gray-50 border-2 border-gray-200 rounded-xl focus:border-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition-all duration-300 text-slate-800 font-semibold text-lg"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 10))}
                   />
                 </div>
                 <button

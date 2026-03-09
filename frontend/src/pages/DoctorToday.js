@@ -974,7 +974,6 @@ export default function DoctorToday() {
                         })()}
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div className="text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{a.patient?.gender || '--'}</span></div>
                             <div className="text-slate-700">Age: <span className="text-slate-900">{(() => { const p = a.patient || {}; if (p.age !== undefined && p.age !== null && p.age !== "") return p.age; const pid = String(p._id || a.patient || ""); const locAge = localStorage.getItem(`userAgeById_${pid}`) || ""; if (locAge) return String(locAge); const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || ""; if (!dob) return ""; const b = new Date(dob); if (Number.isNaN(b.getTime())) return ""; const today = new Date(); let age = today.getFullYear() - b.getFullYear(); const m = today.getMonth() - b.getMonth(); if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--; return String(age); })()}</span></div>
                         <div className="text-slate-700">Date & Time: <span className="text-slate-900">{a.date} {a.startTime}</span></div>
                         <div className="text-slate-700">Fee: <span className="text-slate-900">₹{a.fee || 0}</span></div>

@@ -454,6 +454,12 @@ export default function SearchDoctors() {
             </div>
           </div>
         </div>
+        <div className="mb-10 text-center animate-fade-in">
+          <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+            Find Your Perfect Doctor
+            <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+          </h2>
+        </div>
         <div className="grid grid-cols-1 gap-8">
           <main>
             {error && <div className="mb-6 text-center text-sm text-red-600 bg-red-50 border border-red-200 rounded-xl p-4 animate-fade-in shadow-lg">{error}</div>}
@@ -502,7 +508,6 @@ export default function SearchDoctors() {
                     </div>
                     <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                       <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                      {d.user?.gender && <div className="text-xs text-slate-500 text-capitalize mb-1">{d.user.gender}</div>}
                       {(() => { const avg = Number(d?.averageRating || 0) || 0; if (avg === 0) return null; const s = Math.round(avg); return (
                         <div className="mb-2 flex items-center gap-2">
                           <div className="flex items-center gap-1">
@@ -525,12 +530,6 @@ export default function SearchDoctors() {
                 ))}
               </div>
             )}
-            <div className="mt-12 mb-10 text-center animate-fade-in">
-              <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
-                Find Your Perfect Doctor
-                <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
-              </h2>
-            </div>
           </main>
         </div>
       </div>

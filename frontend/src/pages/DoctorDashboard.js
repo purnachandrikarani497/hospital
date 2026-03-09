@@ -1089,7 +1089,10 @@ export default function DoctorDashboard() {
           </div>
 
           <div className="max-w-5xl mx-auto flex flex-wrap justify-center gap-4 mb-6">
-            <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-indigo-50">
+            <div 
+              onClick={() => nav("/doctor/appointments")}
+              className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-indigo-50 cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-indigo-100/50 flex items-center justify-center shadow-sm">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1102,7 +1105,10 @@ export default function DoctorDashboard() {
                 </div>
               </div>
             </div>
-            <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-blue-50">
+            <div 
+              onClick={() => nav("/doctor/appointments")}
+              className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-blue-50 cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-blue-100/50 flex items-center justify-center shadow-sm">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0EA5E9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -1115,7 +1121,10 @@ export default function DoctorDashboard() {
                 </div>
               </div>
             </div>
-            <div className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-cyan-50">
+            <div 
+              onClick={() => nav("/doctor/appointments")}
+              className="relative flex-1 min-w-[160px] bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-4 shadow-2xl transition-transform duration-300 hover:scale-105 hover:bg-cyan-50 cursor-pointer"
+            >
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-xl bg-cyan-100/50 flex items-center justify-center shadow-sm">
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0891B2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

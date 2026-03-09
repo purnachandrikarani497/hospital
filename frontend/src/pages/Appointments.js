@@ -69,9 +69,7 @@ export default function Appointments() {
   const [alertHandled, setAlertHandled] = useState(false);
   const [filePreview, setFilePreview] = useState(null);
   const [isFullPreview, setIsFullPreview] = useState(false);
-  const [presOpen, setPresOpen] = useState(false);
-  const [presId, setPresId] = useState("");
-  const presIframeRef = useRef(null);
+  const [presModalAppt, setPresModalAppt] = useState(null);
 
   useEffect(() => {
     try {
@@ -792,9 +790,6 @@ export default function Appointments() {
                     </div>
                     <div className="text-sm text-slate-700">Specialization: <span className="text-slate-900">{profiles.get(String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</span></div>
                     <div className="text-sm text-slate-700">Date & Time: <span className="text-slate-900">{isPrescriptionsView ? `${a.date} | ${a.time}` : `${a.date} | ${a.startTime}`}</span></div>
-                    {!isPrescriptionsView && (
-                      <div className="text-sm text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{profiles.get(String(a.doctor?._id || a.doctor))?.user?.gender || "--"}</span></div>
-                    )}
                     {!isPrescriptionsView && (() => {
                       try {
                         const docId = String(a.doctor?._id || a.doctor || '');
@@ -809,8 +804,8 @@ export default function Appointments() {
                 </div>
                 <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto sm:justify-end mt-2 sm:mt-0">
                   {isPrescriptionsView ? (
-                    <button onClick={() => { try { const u = String(a.url || ''); if (u) nav(u); } catch(_) {} }} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Open</button>
-                  ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
+                  <button onClick={() => setPresModalAppt(a)} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Open</button>
+                ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
                     <div className="flex flex-wrap gap-2 items-center">
                       <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Cancelled</span>
                       {(() => {
@@ -837,7 +832,7 @@ export default function Appointments() {
                       <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Consultation Completed</span>
                       {a.prescriptionText && (
                         <button
-                          onClick={() => { const id = String(a._id || a.id || ''); if (id) nav(`/prescription/${id}`); }}
+                          onClick={() => setPresModalAppt(a)}
                           className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
                         >
                           View Prescription
@@ -925,7 +920,7 @@ export default function Appointments() {
                                   )}
                                   {a.isPrescriptionShared && a.prescriptionText && (
                                     <button
-                                      onClick={() => { const id = String(a._id || a.id || ''); if (id) nav(`/prescription/${id}`); }}
+                                      onClick={() => setPresModalAppt(a)}
                                       className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
                                     >
                                       View Prescription
@@ -1168,7 +1163,7 @@ export default function Appointments() {
                         return (a.prescriptionText && (
                           <>
                             <button
-                              onClick={() => nav(`/prescription/${a._id || a.id}`)}
+                              onClick={() => setPresModalAppt(a)}
                               className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
                             >
                               View Prescription
@@ -1420,7 +1415,7 @@ export default function Appointments() {
                   <div className="text-sm text-slate-900">{String(detailsAppt?.patient?.name || 'You')}</div>
                 </div>
                 <div>
-                  <div className="text-slate-900 font-semibold mb-1">Age / Gender</div>
+                  <div className="text-slate-900 font-semibold mb-1">Age</div>
                   <div className="inline-flex items-center gap-2">
                     <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">{(() => {
                       try {
@@ -1450,7 +1445,6 @@ export default function Appointments() {
                         return ageStr || '--';
                       } catch(_) { return '--'; }
                     })()}</span>
-                    <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">{(() => { try { const p = detailsAppt?.patient || {}; const pid = String(p._id || localStorage.getItem('userId') || ''); const gender = p.gender || p.sex || (pid ? localStorage.getItem(`userGenderById_${pid}`) || '' : ''); return gender || '--'; } catch(_) { return '--'; } })()}</span>
                   </div>
                 </div>
               </div>
@@ -1692,20 +1686,6 @@ export default function Appointments() {
           />
         </div>
       )}
-      {presOpen && (
-        <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
-          <div className="bg-white border border-slate-200 rounded-xl shadow-lg w-[95vw] max-w-6xl h-[85vh] overflow-hidden flex flex-col">
-            <div className="px-4 py-3 border-b font-semibold">Prescription</div>
-            <div className="flex-1">
-              <iframe ref={presIframeRef} title="Prescription" src={`/prescription/${presId}?embed=1`} className="w-full h-full" />
-            </div>
-            <div className="px-4 py-3 border-t flex items-center justify-end gap-2">
-              <button type="button" onClick={() => { try { const w = presIframeRef?.current?.contentWindow; if (w) { try { w.postMessage({ type: 'PRINT' }, window.location.origin); } catch(__) { try { w.focus(); w.print(); } catch(___) {} } } else { window.open(`/prescription/${presId}?print=1`, '_blank'); } } catch(_) { try { window.open(`/prescription/${presId}?print=1`, '_blank'); } catch(__) {} } }} className="px-3 py-1 rounded-md border border-slate-300">Download PDF</button>
-              <button type="button" onClick={() => setPresOpen(false)} className="px-3 py-1 rounded-md border border-slate-300">Close</button>
-            </div>
-          </div>
-        </div>
-      )}
       {null}
       {bookDocId && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -1778,6 +1758,65 @@ export default function Appointments() {
                 </button>
                 <div className="text-xs text-slate-600">Your rating helps improve doctor profiles.</div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {presModalAppt && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-[100]" style={{ overscrollBehavior: 'contain' }} onClick={(e) => { if (e.target === e.currentTarget) setPresModalAppt(null); }}>
+          <div className="relative m-auto bg-white/95 backdrop-blur-md rounded-2xl border border-blue-200/50 shadow-2xl w-[95vw] max-w-5xl h-[90vh] overflow-hidden flex flex-col animate-scale-up">
+            <div className="sticky top-0 flex items-center justify-between px-6 py-4 border-b border-blue-200/50 bg-white/95 backdrop-blur-md z-10">
+              <div className="flex flex-col">
+                <div className="text-xl font-extrabold bg-gradient-to-r from-blue-700 via-purple-700 to-indigo-800 bg-clip-text text-transparent">Prescription</div>
+                <div className="text-xs text-slate-500 font-medium">{presModalAppt.doctor?.name ? `Dr. ${presModalAppt.doctor?.name}` : (presModalAppt.doctor || '')} | {presModalAppt.date}</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => {
+                    const ifr = document.getElementById('pres-iframe');
+                    if (ifr && ifr.contentWindow) {
+                      ifr.contentWindow.postMessage('DOWNLOAD', window.location.origin);
+                    }
+                  }}
+                  className="px-4 py-1.5 rounded-xl border-2 border-green-100 text-green-700 font-bold hover:bg-green-50 transition-all duration-300 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download PDF
+                </button>
+                <button 
+                  onClick={() => {
+                    const ifr = document.getElementById('pres-iframe');
+                    if (ifr && ifr.contentWindow) {
+                      ifr.contentWindow.postMessage('PRINT', window.location.origin);
+                    }
+                  }}
+                  className="px-4 py-1.5 rounded-xl border-2 border-indigo-100 text-indigo-700 font-bold hover:bg-indigo-50 transition-all duration-300 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Print
+                </button>
+                <button 
+                  onClick={() => setPresModalAppt(null)} 
+                  className="p-2 rounded-xl border-2 border-slate-100 text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all duration-300"
+                >
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 bg-slate-50/50 overflow-hidden relative">
+              <iframe 
+                id="pres-iframe"
+                title="Prescription" 
+                src={`/prescription/${presModalAppt._id || presModalAppt.id}?embed=1`} 
+                className="w-full h-full border-none"
+              />
             </div>
           </div>
         </div>
