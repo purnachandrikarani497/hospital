@@ -160,9 +160,22 @@ export default function Appointments() {
         const arr = Array.isArray(data) ? data : [];
         setList(arr);
         
-        // Skip fetching doctor profiles separately for every appointment
-        // We only need the doctor's name which is already populated
-        setProfiles(new Map());
+        const ids = Array.from(new Set(arr.map((a) => {
+          try {
+            return String(typeof a.doctor === 'string' ? a.doctor : (a.doctor?._id || a.doctor?.id || ''));
+          } catch(_) { return ''; }
+        }).values())).filter(Boolean);
+        if (ids.length) {
+          const resps = await Promise.all(ids.map((id) => API.get(`/doctors?user=${id}`).catch(() => ({ data: [] }))));
+          const map = new Map();
+          ids.forEach((id, idx) => {
+            const first = Array.isArray(resps[idx]?.data) ? resps[idx].data[0] : null;
+            if (first) map.set(String(id), first);
+          });
+          setProfiles(map);
+        } else {
+          setProfiles(new Map());
+        }
       } catch (e) {
         if (e.message === 'canceled') return;
         setError(e.response?.data?.message || e.message || "Failed to load");
@@ -170,11 +183,16 @@ export default function Appointments() {
       setLoading(false);
     };
     load();
+
+    // Use a much longer interval for background refresh (e.g. 30s)
+    const iv = setInterval(load, 30000);
+    const onFocus = () => load();
+    window.addEventListener('focus', onFocus);
+    return () => { clearInterval(iv); window.removeEventListener('focus', onFocus); };
   }, [nav]);
 
   useEffect(() => {
-    // Optimization: avoid fetching separate doctor profiles
-    // The main appointment list already contains names
+    // Optimization: avoid separate profile fetching effects
     return;
   }, [presItems, profiles]);
 
@@ -249,22 +267,9 @@ export default function Appointments() {
     return () => { try { meetChanRef.current && meetChanRef.current.close(); meetChanRef.current = null; } catch(_) {} };
   }, []);
 
+  // Removed aggressive 2s polling
   useEffect(() => {
-    const iv = setInterval(async () => {
-      try {
-        const { data } = await API.get("/appointments/mine");
-        const arr = Array.isArray(data) ? data : [];
-        setList(arr);
-      } catch (_) {}
-    }, 2000);
-    const onFocus = () => {
-      API.get("/appointments/mine").then((res) => {
-        const arr = Array.isArray(res.data) ? res.data : [];
-        setList(arr);
-      }).catch(() => {});
-    };
-    window.addEventListener('focus', onFocus);
-    return () => { clearInterval(iv); window.removeEventListener('focus', onFocus); };
+    return;
   }, []);
 
   useEffect(() => {
@@ -299,25 +304,9 @@ export default function Appointments() {
     return () => clearInterval(t);
   }, [list]);
 
+  // Removed aggressive 1s profile polling
   useEffect(() => {
-    const iv = setInterval(async () => {
-      try {
-        const ids = Array.from(new Set((list || []).map((a) => {
-          try {
-            return String(typeof a.doctor === 'string' ? a.doctor : (a.doctor?._id || a.doctor?.id || ''));
-          } catch(_) { return ''; }
-        }).values())).filter(Boolean);
-        if (!ids.length) return;
-        const resps = await Promise.all(ids.map((id) => API.get(`/doctors?user=${id}`).catch(() => ({ data: [] }))));
-        const map = new Map();
-        ids.forEach((id, idx) => {
-          const first = Array.isArray(resps[idx]?.data) ? resps[idx].data[0] : null;
-          if (first) map.set(String(id), first);
-        });
-        setProfiles(map);
-      } catch (_) {}
-    }, 1000);
-    return () => clearInterval(iv);
+    return;
   }, [list]);
 
   useEffect(() => {
