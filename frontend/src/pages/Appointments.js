@@ -152,11 +152,14 @@ export default function Appointments() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) { nav("/login"); return; }
-    const load = async () => {
-      setLoading(true);
+    
+    let isMounted = true;
+    const loadData = async (showLoading = true) => {
+      if (showLoading) setLoading(true);
       setError("");
       try {
         const { data } = await API.get("/appointments/mine");
+        if (!isMounted) return;
         const arr = Array.isArray(data) ? data : [];
         setList(arr);
         
@@ -165,36 +168,39 @@ export default function Appointments() {
             return String(typeof a.doctor === 'string' ? a.doctor : (a.doctor?._id || a.doctor?.id || ''));
           } catch(_) { return ''; }
         }).values())).filter(Boolean);
+        
         if (ids.length) {
-          const resps = await Promise.all(ids.map((id) => API.get(`/doctors?user=${id}`).catch(() => ({ data: [] }))));
+          const { data: profilesData } = await API.get(`/doctors`, { params: { ids: ids.join(',') } });
+          if (!isMounted) return;
           const map = new Map();
-          ids.forEach((id, idx) => {
-            const first = Array.isArray(resps[idx]?.data) ? resps[idx].data[0] : null;
-            if (first) map.set(String(id), first);
-          });
+          if (Array.isArray(profilesData)) {
+            profilesData.forEach(p => {
+              const did = String(p.user?._id || p.user || '');
+              if (did) map.set(did, p);
+            });
+          }
           setProfiles(map);
-        } else {
-          setProfiles(new Map());
         }
       } catch (e) {
-        if (e.message === 'canceled') return;
-        setError(e.response?.data?.message || e.message || "Failed to load");
+        if (!isMounted) return;
+        setError(e.response?.data?.message || e.message || "Failed to load appointments");
+      } finally {
+        if (isMounted) setLoading(false);
       }
-      setLoading(false);
     };
-    load();
+    
+    loadData(true);
 
-    // Use a much longer interval for background refresh (e.g. 30s)
-    const iv = setInterval(load, 30000);
-    const onFocus = () => load();
-    window.addEventListener('focus', onFocus);
-    return () => { clearInterval(iv); window.removeEventListener('focus', onFocus); };
+    const intervalId = setInterval(() => loadData(false), 30000);
+    const handleFocus = () => loadData(false);
+    window.addEventListener('focus', handleFocus);
+    
+    return () => { 
+      isMounted = false;
+      clearInterval(intervalId); 
+      window.removeEventListener('focus', handleFocus); 
+    };
   }, [nav]);
-
-  useEffect(() => {
-    // Optimization: avoid separate profile fetching effects
-    return;
-  }, [presItems, profiles]);
 
   useEffect(() => {
     let chan = null;
