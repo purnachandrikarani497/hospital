@@ -263,8 +263,9 @@ export default function DoctorToday() {
           await API.put(`/appointments/${String(a._id || a.id)}/complete`);
           setList((prev) => prev.map((x) => (String(x._id || x.id) === String(a._id || a.id) ? { ...x, status: 'COMPLETED' } : x)));
           try {
+            const base = String(API.defaults.baseURL || "");
+            const origin = (base.startsWith("/") || !base) ? window.location.origin : base.replace(/\/(api)?$/, "");
             const w = window;
-            const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
             const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'] }) : null;
             socket && socket.emit('meet:update', { apptId: String(a._id || a.id), actor: 'doctor', event: 'complete' });
             try { socket && socket.close(); } catch(_) {}
@@ -917,9 +918,9 @@ export default function DoctorToday() {
             </h2>
           </div>
           <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl overflow-hidden">
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block overflow-x-auto max-h-[70vh] custom-scrollbar pr-1">
               <table className="min-w-full text-sm">
-                <thead className="bg-slate-50 text-slate-700">
+                <thead className="bg-slate-50 text-slate-700 sticky top-0 z-10">
                   <tr>
                     <th className="px-4 py-3 text-left">S.NO</th>
                     <th className="px-4 py-3 text-left">Patient</th>

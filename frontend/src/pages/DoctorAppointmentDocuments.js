@@ -87,11 +87,12 @@ export default function DoctorAppointmentDocuments() {
 
   useEffect(() => {
     try {
-      const origin = String(API.defaults.baseURL || '').replace(/\/(api)?$/, '');
-      const w = window;
-      const onReady = () => {
-        try {
-          const socket = w.io ? w.io(origin, { transports: ['polling', 'websocket'], auth: { token: localStorage.getItem('token') || '' } }) : null;
+      const base = String(API.defaults.baseURL || "");
+    const origin = (base.startsWith("/") || !base) ? window.location.origin : base.replace(/\/(api)?$/, "");
+    const w = window;
+    const onReady = () => {
+      try {
+        const socket = w.io ? w.io(origin, { transports: ["polling", "websocket"], auth: { token: localStorage.getItem("token") || "" } }) : null;
           if (socket) {
             socketRef.current = socket;
             socket.on('chat:new', (msg) => {

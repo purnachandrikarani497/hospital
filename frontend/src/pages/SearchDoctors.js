@@ -12,7 +12,6 @@ export default function SearchDoctors() {
   const nav = useNavigate();
   const [q, setQ] = useState("");
   const [list, setList] = useState([]);
-  const [ratingById, setRatingById] = useState({});
   const [specialization, setSpecialization] = useState("");
   const [specialties, setSpecialties] = useState([]);
   const [error, setError] = useState("");
@@ -67,52 +66,12 @@ export default function SearchDoctors() {
     try {
       if (abortRef.current) { try { abortRef.current.abort(); } catch(_) {} }
       abortRef.current = new AbortController();
-      const { data } = await API.get("/doctors", { params: { q, specialization }, signal: abortRef.current.signal });
-      let items = Array.isArray(data) ? data : [];
-
-      if (q && String(q).trim().length > 0) {
-        const norm = String(q).trim().toLowerCase();
-        items = items.filter((d) => {
-          const name = String(d.user?.name || "").toLowerCase();
-          const clinic = String(d.clinic?.name || "").toLowerCase();
-          const specs = (d.specializations || []).map((s) => String(s).toLowerCase());
-          return name.includes(norm) || clinic.includes(norm) || specs.some((s) => s.includes(norm));
-        });
-      }
-
-      if (specialization) {
-        const norm = specialization.trim().toLowerCase();
-        const hasMatches = items.some((d) => (d.specializations || []).some((s) => String(s).toLowerCase().includes(norm)));
-        if (!hasMatches) {
-          const all = await API.get("/doctors", { signal: abortRef.current.signal });
-          const arr = Array.isArray(all.data) ? all.data : [];
-          items = arr.filter((d) => (d.specializations || []).some((s) => String(s).toLowerCase().includes(norm)));
-        } else {
-          items = items.filter((d) => (d.specializations || []).some((s) => String(s).toLowerCase().includes(norm)));
-        }
-      }
-
-      setList(items);
-      try {
-        const ids = items.map((d) => String(d?.user?._id || '')).filter(Boolean);
-        if (ids.length) {
-          const pairs = await Promise.all(ids.map(async (did) => {
-            try {
-              const res = await API.get(`/doctors/${did}/rating`);
-              const avg = Number(res?.data?.average || 0) || 0;
-              const count = Number(res?.data?.count || 0) || 0;
-              return [did, { avg, count }];
-            } catch (_) {
-              return [did, { avg: 0, count: 0 }];
-            }
-          }));
-          setRatingById(Object.fromEntries(pairs));
-        } else {
-          setRatingById({});
-        }
-      } catch (_) {
-        setRatingById({});
-      }
+      const params = {};
+      if (q && q.trim()) params.q = q.trim();
+      if (specialization) params.specialization = specialization;
+      
+      const { data } = await API.get("/doctors", { params, signal: abortRef.current.signal });
+      setList(Array.isArray(data) ? data : []);
     } catch (e) {
       if (e.message === 'canceled') return;
       setList([]);
@@ -146,7 +105,8 @@ export default function SearchDoctors() {
 
   useEffect(() => {
     const cleanup = [];
-    const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
+    const base = String(API.defaults.baseURL || "");
+    const origin = (base.startsWith("/") || !base) ? window.location.origin : base.replace(/\/(api)?$/, "");
     const w = window;
     const onReady = () => {
       try {
@@ -185,7 +145,7 @@ export default function SearchDoctors() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const pageTitle = specialization ? `Find ${specialization} | HospoZen` : (q ? `Find Doctors: ${q} | HospoZen` : 'Find Doctors | HospoZen');
+  const pageTitle = specialization ? `Find ${specialization} | HospoZen` : (q ? `Book an appoinment: ${q} | HospoZen` : 'Book an appoinment | HospoZen');
   const pageDesc = specialization ? `Browse and book ${specialization} near you.` : (q ? `Search results for doctors matching "${q}".` : 'Search and book verified doctors by specialization, experience, and ratings.');
 
   if (isAdmin) {
@@ -311,15 +271,14 @@ export default function SearchDoctors() {
                 </h2>
               </div>
               
-              <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/30 shadow-2xl p-6 mb-8 animate-fade-in opacity-0 relative z-20" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
-                <div className="grid sm:grid-cols-4 gap-4 items-end">
-                  <div className="sm:col-span-1 relative">
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Specialization</label>
+              <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-white/40 shadow-xl p-3 mb-10 animate-fade-in opacity-0 relative z-20 max-w-4xl mx-auto" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
+                <div className="flex flex-col md:flex-row gap-2 items-center">
+                  <div className="w-full md:w-1/3 relative">
                     <div className="relative">
                       <select
                         value={specialization}
                         onChange={(e) => setSpecialization(e.target.value)}
-                        className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 appearance-none outline-none text-slate-700 font-medium cursor-pointer"
+                        className="w-full p-2.5 pr-10 border-2 border-slate-100 rounded-xl bg-slate-50/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 appearance-none outline-none text-slate-700 font-medium cursor-pointer"
                       >
                         <option value="">All Specializations</option>
                         {specialties.map((s) => (
@@ -327,33 +286,30 @@ export default function SearchDoctors() {
                         ))}
                       </select>
                       <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
                     </div>
                   </div>
-                  <div className="sm:col-span-3">
-                    <div className="flex flex-col sm:flex-row gap-3 items-end">
-                      <div className="w-full">
-                        <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
-                        <input
-                          className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
-                          placeholder="Search by name, clinic, or specialization..."
-                          value={q}
-                          onChange={(e) => setQ(e.target.value)}
-                          onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
-                        />
-                      </div>
-                      <div className="w-full sm:w-auto flex gap-2 sm:gap-3">
-                        <button onClick={search} className="flex-1 sm:w-32 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap">Search</button>
-                        <button
-                          onClick={() => { setQ(''); setSpecialization(''); search(); }}
-                          className="flex-1 sm:w-32 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap"
-                        >
-                          Clear
-                        </button>
-                      </div>
+                  <div className="w-full md:w-2/3 flex flex-col sm:flex-row gap-2 items-center">
+                    <div className="w-full relative">
+                      <input
+                        className="w-full p-2.5 pl-4 border-2 border-slate-100 rounded-xl bg-slate-50/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
+                        placeholder="Search by name, clinic, or specialization..."
+                        value={q}
+                        onChange={(e) => setQ(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
+                      />
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <button onClick={search} className="flex-1 sm:w-24 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 whitespace-nowrap">Search</button>
+                      <button
+                        onClick={() => { setQ(''); setSpecialization(''); search(); }}
+                        className="flex-1 sm:w-24 px-4 py-2.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap"
+                      >
+                        Clear
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -396,14 +352,14 @@ export default function SearchDoctors() {
                       </div>
                       <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                         <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                        {(() => { const did = String(d.user?._id || ''); const info = ratingById[did]; const s = info?.avg || 0; const c = info?.count || 0; if (!s || !c) return null; return (
-                          <div className="mb-2 flex items-center gap-1">
-                            <>
+                        {(() => { const avg = Number(d?.averageRating || 0) || 0; if (avg === 0) return null; const s = Math.round(avg); return (
+                          <div className="mb-2 flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                               {[1,2,3,4,5].map((n) => (
                                 <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                               ))}
-                            </>
-                            <span className="text-sm text-slate-600">({c})</span>
+                            </div>
+                            <span className="text-sm font-medium text-slate-700">{avg.toFixed(1)}</span>
                           </div>
                         ); })()}
                         <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
@@ -451,19 +407,18 @@ export default function SearchDoctors() {
       <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
           <div className="relative mb-10 text-center">
             <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
-              Find Your Perfect Doctor
+              Book an appointment
               <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
             </h1>
           </div>
-        <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-white/30 shadow-2xl p-6 mb-8 animate-fade-in opacity-0 relative z-20" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
-          <div className="grid sm:grid-cols-4 gap-4 items-end">
-            <div className="sm:col-span-1 relative">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">Specialization</label>
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl border border-white/40 shadow-xl p-3 mb-10 animate-fade-in opacity-0 relative z-20 max-w-4xl mx-auto" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
+          <div className="flex flex-col md:flex-row gap-2 items-center">
+            <div className="w-full md:w-1/3 relative">
               <div className="relative">
                 <select
                   value={specialization}
                   onChange={(e) => setSpecialization(e.target.value)}
-                  className="w-full p-3 pr-10 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 appearance-none outline-none text-slate-700 font-medium cursor-pointer"
+                  className="w-full p-2.5 pr-10 border-2 border-slate-100 rounded-xl bg-slate-50/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 appearance-none outline-none text-slate-700 font-medium cursor-pointer"
                 >
                   <option value="">All Specializations</option>
                   {specialties.map((s) => (
@@ -471,33 +426,30 @@ export default function SearchDoctors() {
                   ))}
                 </select>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </div>
               </div>
             </div>
-            <div className="sm:col-span-3">
-              <div className="flex flex-col sm:flex-row gap-3 items-end">
-                <div className="w-full">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">Search Doctors</label>
-                  <input
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
-                    placeholder="Search by name or specialization..."
-                    value={q}
-                    onChange={(e) => setQ(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
-                  />
-                </div>
-                <div className="w-full sm:w-auto flex gap-2 sm:gap-3">
-                  <button onClick={search} className="flex-1 sm:w-32 px-4 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 whitespace-nowrap">Search</button>
-                  <button
-                    onClick={() => { setQ(''); setSpecialization(''); search(); }}
-                    className="flex-1 sm:w-32 px-4 py-3 rounded-xl border-2 border-slate-300 bg-white hover:bg-slate-50 font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap"
-                  >
-                    Clear
-                  </button>
-                </div>
+            <div className="w-full md:w-2/3 flex flex-col sm:flex-row gap-2 items-center">
+              <div className="w-full relative">
+                <input
+                  className="w-full p-2.5 pl-4 border-2 border-slate-100 rounded-xl bg-slate-50/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
+                  placeholder="Search by name or specialization..."
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') search(); }}
+                />
+              </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <button onClick={search} className="flex-1 sm:w-24 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-md hover:shadow-lg transition-all duration-300 hover:scale-105 whitespace-nowrap">Search</button>
+                <button
+                  onClick={() => { setQ(''); setSpecialization(''); search(); }}
+                  className="flex-1 sm:w-24 px-4 py-2.5 rounded-xl border-2 border-slate-200 bg-white hover:bg-slate-50 text-slate-600 font-semibold transition-all duration-300 hover:scale-105 whitespace-nowrap"
+                >
+                  Clear
+                </button>
               </div>
             </div>
           </div>
@@ -550,7 +502,8 @@ export default function SearchDoctors() {
                     </div>
                     <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
                       <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                      {(() => { const did = String(d.user?._id || ''); const avgRaw = Number(d?.averageRating || 0) || 0; const fallbackAvg = Number(ratingById[did]?.avg || 0) || 0; const avg = avgRaw > 0 ? avgRaw : fallbackAvg; const c = Number(ratingById[did]?.count || 0) || 0; const s = Math.round(avg); return (
+                      {d.user?.gender && <div className="text-xs text-slate-500 text-capitalize mb-1">{d.user.gender}</div>}
+                      {(() => { const avg = Number(d?.averageRating || 0) || 0; if (avg === 0) return null; const s = Math.round(avg); return (
                         <div className="mb-2 flex items-center gap-2">
                           <div className="flex items-center gap-1">
                             {[1,2,3,4,5].map((n) => (
@@ -558,7 +511,6 @@ export default function SearchDoctors() {
                             ))}
                           </div>
                           <span className="text-sm font-medium text-slate-700">{avg.toFixed(1)}</span>
-                          {c > 0 && <span className="text-sm text-slate-600">({c} reviews)</span>}
                         </div>
                       ); })()}
                       <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
@@ -573,6 +525,12 @@ export default function SearchDoctors() {
                 ))}
               </div>
             )}
+            <div className="mt-12 mb-10 text-center animate-fade-in">
+              <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+                Find Your Perfect Doctor
+                <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+              </h2>
+            </div>
           </main>
         </div>
       </div>

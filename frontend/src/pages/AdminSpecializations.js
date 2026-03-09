@@ -175,7 +175,7 @@ export default function AdminSpecializations() {
           {loading ? (
             <div className="p-12 text-center text-slate-500">Loading...</div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 max-h-[50vh] overflow-y-auto custom-scrollbar pr-1">
               {specialties.length === 0 ? (
                 <div className="p-12 text-center text-slate-400">No specializations found.</div>
               ) : (

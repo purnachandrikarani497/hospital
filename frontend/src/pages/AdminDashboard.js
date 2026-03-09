@@ -8,30 +8,20 @@ export default function AdminDashboard() {
   const [doctorCount, setDoctorCount] = useState(0);
   const [appointmentCount, setAppointmentCount] = useState(0);
   const [patientCount, setPatientCount] = useState(0);
-  const [latest, setLatest] = useState([]);
-  const rank = (s) => {
-    const x = String(s || "").toUpperCase();
-    if (x === "PENDING") return 0;
-    if (x === "CONFIRMED" || x === "COMPLETED") return 1;
-    if (x === "CANCELLED" || x === "CANCELED") return 2;
-    return 3;
-  };
+  const [supportRequests, setSupportRequests] = useState([]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const d = await API.get("/doctors");
-        setDoctorCount(d.data?.length || 0);
+        const { data: stats } = await API.get("/stats");
+        setDoctorCount(stats.doctors || 0);
+        setAppointmentCount(stats.appointments || 0);
+        setPatientCount(stats.patients || 0);
 
-        const a = await API.get("/admin/appointments");
-        const list = a.data || [];
-        setAppointmentCount(list.length);
-
-        const p = await API.get("/admin/patients");
-        setPatientCount(p.data?.length || 0);
-
-        const ordered = list.slice().sort((u, v) => rank(u.status) - rank(v.status));
-        setLatest(ordered.slice(0, 5));
+        try {
+          const s = await API.get("/support/admin");
+          setSupportRequests(Array.isArray(s.data) ? s.data : []);
+        } catch (_) {}
       } catch (e) {}
     };
     load();
@@ -91,6 +81,10 @@ export default function AdminDashboard() {
                       <span className="relative z-10">Doctors List</span>
                       {(p.startsWith("/admin/doctors") && !p.startsWith("/admin/doctors/pending")) && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                     </Link>
+                    <Link to="/admin/support" className={linkClass(p.startsWith("/admin/support"))}>
+                      <span className="relative z-10">Support</span>
+                      {p.startsWith("/admin/support") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
                   </>
                 );
               })()}
@@ -129,7 +123,8 @@ export default function AdminDashboard() {
                       { path: '/admin/appointments', label: 'Appointments' },
                       { path: '/admin/add-doctor', label: 'Add Doctor' },
                       { path: '/admin/specializations', label: 'Specializations' },
-                      { path: '/admin/doctors', label: 'Doctors List' }
+                      { path: '/admin/doctors', label: 'Doctors List' },
+                      { path: '/admin/support', label: 'Support' }
                     ].map((item) => (
                       <Link
                         key={item.path}
@@ -195,61 +190,54 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white/85 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6">
-            <div className="text-slate-900 font-semibold mb-3">Latest Bookings</div>
-            {latest && latest.length ? (
-              <div className="divide-y">
-                {latest.map((b) => (
-                  <div key={String(b._id)} className="flex items-center justify-between py-2 card-hover">
-                    <div className="flex items-center gap-3">
-                      {(() => {
-                        const pid = String(b.patient?._id || b.patient || "");
-                        let img = String(b.patient?.photoBase64 || localStorage.getItem(`userPhotoBase64ById_${pid}`) || "");
-                        let src = img;
-                        if (img && !img.startsWith("data:") && !img.startsWith("http")) {
-                          src = `data:image/png;base64,${img}`;
-                        }
-                        const ok = src.startsWith("data:") || src.startsWith("http");
-                        return ok ? (
-                          <img src={src} alt="Patient" className="h-8 w-8 rounded-full object-cover border" />
-                        ) : (
-                          <div className="h-8 w-8 rounded-full border bg-white" />
-                        );
-                      })()}
-                      <div>
-                        <div className="text-slate-900 text-sm">{b.patient?.name || "Patient"}</div>
-                        <div className="text-slate-600 text-xs">with {b.doctor?.name ? `Dr. ${b.doctor.name}` : "Doctor"}</div>
-                        <div className="text-slate-600 text-xs">{b.patient?.gender ? `${b.patient.gender.charAt(0).toUpperCase() + b.patient.gender.slice(1)} | ` : ""}{(() => {
-                          const p = b.patient || {};
-                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
-                          const dob = p.birthday || p.dob || p.dateOfBirth || "";
-                          if (!dob) return "";
-                          const d = new Date(dob);
-                          if (Number.isNaN(d.getTime())) return "";
-                          const t = new Date();
-                          let age = t.getFullYear() - d.getFullYear();
-                          const m = t.getMonth() - d.getMonth();
-                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
-                          return `Age: ${age}`;
-                        })()}</div>
+          <div className="grid grid-cols-1 gap-6 mb-10">
+            {/* Support Requests */}
+            <div className="bg-white/85 backdrop-blur-sm rounded-2xl border border-white/30 shadow-2xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="text-slate-900 font-bold">Support Requests</div>
+                <div className="bg-indigo-100 text-indigo-700 text-[10px] px-2 py-0.5 rounded-full font-bold">NEW</div>
+              </div>
+              {supportRequests && supportRequests.length ? (
+                <div className="divide-y divide-slate-100">
+                  {supportRequests.map((s) => (
+                    <div key={s._id} className="flex items-center justify-between py-3 transition-all duration-300 hover:bg-slate-50/50 rounded-xl px-2">
+                      <div className="flex items-center gap-3">
+                        <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                          {s.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div className="text-slate-900 text-sm font-bold">{s.name}</div>
+                          <div className="text-indigo-600 text-xs font-bold">{s.phone}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-slate-500 text-[10px] mb-1">{new Date(s.createdAt).toLocaleDateString()}</div>
+                        <select
+                          value={s.status}
+                          onChange={async (e) => {
+                            try {
+                              const newStatus = e.target.value;
+                              await API.put(`/support/admin/${s._id}`, { status: newStatus });
+                              setSupportRequests(prev => prev.map(item => item._id === s._id ? { ...item, status: newStatus } : item));
+                            } catch (_) {}
+                          }}
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full outline-none appearance-none cursor-pointer text-center ${
+                            s.status === 'pending' ? 'bg-amber-100 text-amber-700' :
+                            s.status === 'contacted' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'
+                          }`}
+                        >
+                          <option value="pending">PENDING</option>
+                          <option value="contacted">CONTACTED</option>
+                          <option value="resolved">RESOLVED</option>
+                        </select>
                       </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="text-slate-700 text-sm">{b.date} {b.startTime}</div>
-                      <span className={`badge ${(() => {
-                        const s = String(b.status || "").toUpperCase();
-                        if (s === "COMPLETED") return "badge-completed";
-                        if (s === "CONFIRMED") return "badge-confirmed";
-                        if (s === "CANCELLED" || s === "CANCELED") return "badge-offline";
-                        return "badge-busy";
-                      })()}`}>{b.status}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-slate-600 text-sm">No recent bookings</div>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-slate-400 text-sm py-8 text-center">No support requests</div>
+              )}
+            </div>
           </div>
         </div>
       </div>

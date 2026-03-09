@@ -427,7 +427,8 @@ export default function DoctorDashboard() {
     const uid = localStorage.getItem("userId") || "";
     const cleanup = [];
     const initSocket = () => {
-      const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
+      const base = String(API.defaults.baseURL || "");
+      const origin = (base.startsWith("/") || !base) ? window.location.origin : base.replace(/\/(api)?$/, "");
       const w = window;
       const onReady = () => {
         try {
@@ -840,37 +841,6 @@ export default function DoctorDashboard() {
     return arr.slice(0, 6);
   }, [list]);
 
-  const latest = useMemo(() => {
-    const mergedAll = [...(list || []), ...(latestToday || [])];
-    const seen = new Set();
-    const merged = [];
-    for (const a of mergedAll) {
-      const k = String(a._id || a.id || (a.date + "_" + String(a.startTime || "")));
-      if (!seen.has(k)) { seen.add(k); merged.push(a); }
-    }
-    const toTS = (a) => {
-      const d = new Date(a.date);
-      if (Number.isNaN(d.getTime())) return 0;
-      const t = String(a.startTime || "00:00");
-      const parts = t.split(":");
-      const hh = Number(parts[0]) || 0;
-      const mm = Number(parts[1]) || 0;
-      d.setHours(hh, mm, 0, 0);
-      return d.getTime();
-    };
-    const pending = merged.filter((a) => String(a.status).toUpperCase() === "PENDING");
-    const confirmed = merged.filter((a) => String(a.status).toUpperCase() === "CONFIRMED");
-    const done = merged.filter((a) => {
-      const s = String(a.status).toUpperCase();
-      return s === "CANCELLED" || s === "COMPLETED";
-    });
-    pending.sort((x, y) => toTS(y) - toTS(x));
-    confirmed.sort((x, y) => toTS(y) - toTS(x));
-    done.sort((x, y) => toTS(y) - toTS(x));
-    const ordered = [...pending, ...confirmed, ...done];
-    return ordered.slice(0, 4);
-  }, [list, latestToday]);
-
   return (
     <div className="max-w-7xl mx-auto px-4 pt-4 page-gradient relative">
       <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
@@ -1172,233 +1142,133 @@ export default function DoctorDashboard() {
             </div>
             {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
             {error && !loading && <div className="text-red-600 mb-3 text-sm bg-red-50 p-2 rounded-md border border-red-100">{error}</div>}
-            <div className="space-y-3">
-              {sortedToday.length === 0 && !loading ? (
-                <div className="text-slate-500 italic py-4 text-center">No appointments scheduled for today</div>
-              ) : (
-                sortedToday.map((a) => (
-                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 bg-slate-50/30 rounded-xl px-4 py-3 hover:bg-white hover:shadow-md transition-all duration-300">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
-                        {a.patient?.name ? a.patient.name.charAt(0).toUpperCase() : 'P'}
-                      </div>
-                      <div>
-                        <div className="font-bold text-slate-900">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
-                        <div className="text-[10px] text-slate-500">{(() => {
-                          const p = a.patient || {};
-                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
-                          const pid = String(p._id || a.patient || "");
-                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
-                          if (locAge) return `Age: ${locAge}`;
-                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
-                          if (!dob) return "";
-                          const d = new Date(dob);
-                          if (Number.isNaN(d.getTime())) return "";
-                          const t = new Date();
-                          let age = t.getFullYear() - d.getFullYear();
-                          const m = t.getMonth() - d.getMonth();
-                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
-                          return `Age: ${age}`;
-                        })()}</div>
-                        <div className="text-xs text-slate-500 flex items-center gap-2">
-                          <span className="flex items-center gap-1">
-                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            {a.startTime}
-                          </span>
-                          <span>•</span>
-                          <span className={`px-1.5 py-0.5 rounded-full ${a.type === 'online' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
-                            {a.type === 'online' ? 'Online' : 'Clinic'}
-                          </span>
+            <div className="max-h-80 overflow-y-auto custom-scrollbar pr-2">
+              <div className="space-y-3">
+                {sortedToday.length === 0 && !loading ? (
+                  <div className="text-slate-500 italic py-4 text-center">No appointments scheduled for today</div>
+                ) : (
+                  sortedToday.map((a) => (
+                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 bg-slate-50/30 rounded-xl px-4 py-3 hover:bg-white hover:shadow-md transition-all duration-300">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                          {a.patient?.name ? a.patient.name.charAt(0).toUpperCase() : 'P'}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
+                          <div className="text-[10px] text-slate-500">{(() => {
+                            const p = a.patient || {};
+                            if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                            const pid = String(p._id || a.patient || "");
+                            const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                            if (locAge) return `Age: ${locAge}`;
+                            const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                            if (!dob) return "";
+                            const d = new Date(dob);
+                            if (Number.isNaN(d.getTime())) return "";
+                            const t = new Date();
+                            let age = t.getFullYear() - d.getFullYear();
+                            const m = t.getMonth() - d.getMonth();
+                            if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                            return `Age: ${age}`;
+                          })()}</div>
+                          <div className="text-xs text-slate-500 flex items-center gap-2">
+                            <span className="flex items-center gap-1">
+                              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                              {a.startTime}
+                            </span>
+                            <span>•</span>
+                            <span className={`px-1.5 py-0.5 rounded-full ${a.type === 'online' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                              {a.type === 'online' ? 'Online' : 'Clinic'}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
-                      {(() => {
-                        const s = String(a.status).toUpperCase();
-                        const showPay = s === 'CONFIRMED' || s === 'PENDING';
-                        return showPay ? (
-                          <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
-                            {String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Payment Pending'}
-                          </span>
-                        ) : null;
-                      })()}
-                      {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
-                        (() => {
-                          const start = new Date(a.date);
-                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                          start.setHours(sh, sm, 0, 0);
-                          const end = new Date(a.date);
-                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                          end.setHours(eh, em, 0, 0);
-                          if (end.getTime() <= start.getTime()) end.setTime(start.getTime() + 30 * 60 * 1000);
-                          const now = Date.now();
-                          const windowStart = start.getTime() - 5 * 60 * 1000;
-                          if (now >= end.getTime()) {
-                            try { localStorage.removeItem(`leftDoctor_${String(a._id || a.id)}`); } catch(_) {}
-                            return <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">Time Expired</span>;
-                          }
-                          if (now < windowStart) {
-                            return <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">Starts Soon</span>;
-                          }
-                          const id = String(a._id || a.id || '');
-                          const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
-                          const leftDoc = id ? localStorage.getItem(`leftDoctor_${id}`) === '1' : false;
-                          if (joinedDoc) {
+                      <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
+                        {(() => {
+                          const s = String(a.status).toUpperCase();
+                          const showPay = s === 'CONFIRMED' || s === 'PENDING';
+                          return showPay ? (
+                            <span className={`inline-block text-xs font-semibold px-2.5 py-1 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>
+                              {String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Payment Pending'}
+                            </span>
+                          ) : null;
+                        })()}
+                        {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
+                          (() => {
+                            const start = new Date(a.date);
+                            const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
+                            start.setHours(sh, sm, 0, 0);
+                            const end = new Date(a.date);
+                            const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
+                            end.setHours(eh, em, 0, 0);
+                            if (end.getTime() <= start.getTime()) end.setTime(start.getTime() + 30 * 60 * 1000);
+                            const now = Date.now();
+                            const windowStart = start.getTime() - 5 * 60 * 1000;
+                            if (now >= end.getTime()) {
+                              try { localStorage.removeItem(`leftDoctor_${String(a._id || a.id)}`); } catch(_) {}
+                              return <span className="text-xs px-2.5 py-1 rounded-full bg-red-100 text-red-700 font-medium">Time Expired</span>;
+                            }
+                            if (now < windowStart) {
+                              return <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 font-medium">Starts Soon</span>;
+                            }
+                            const id = String(a._id || a.id || '');
+                            const joinedDoc = id ? localStorage.getItem(`joinedByDoctor_${id}`) === '1' : false;
+                            const leftDoc = id ? localStorage.getItem(`leftDoctor_${id}`) === '1' : false;
+                            if (joinedDoc) {
+                              return (
+                                <div className="flex items-center gap-2">
+                                  <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold animate-pulse">In Meeting</span>
+                                  <button onClick={() => leaveMeetFor(id)} className="px-4 py-1.5 rounded-lg border-2 border-red-500 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors">Leave</button>
+                                </div>
+                              );
+                            }
+                            if (leftDoc) {
+                              return (
+                                <button onClick={() => openMeetFor(id)} className="px-4 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 text-xs font-bold transition-colors">Rejoin Meeting</button>
+                              );
+                            }
                             return (
                               <div className="flex items-center gap-2">
-                                <span className="px-2.5 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold animate-pulse">In Meeting</span>
-                                <button onClick={() => leaveMeetFor(id)} className="px-4 py-1.5 rounded-lg border-2 border-red-500 text-red-600 hover:bg-red-50 text-xs font-bold transition-colors">Leave</button>
+                                <button onClick={() => openMeetFor(id)} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-bold shadow-md transition-all active:scale-95">Join Meeting</button>
+                                <button
+                                  onClick={async () => {
+                                    let url = String(localStorage.getItem(`meetlink_${id}`) || a.meetingLink || '').replace(/[`'\"]/g, '').trim();
+                                    if (!url || !/^https?:\/\//.test(url)) {
+                                      try {
+                                        const resp = await API.post(`/appointments/${id}/meet-link/generate`);
+                                        url = String(resp?.data?.url || '').trim();
+                                        if (!/^https?:\/\//.test(url)) { alert('Failed to generate meeting link'); return; }
+                                      } catch (e) {
+                                        alert(e.response?.data?.message || e.message || 'Failed to generate meeting link');
+                                        return;
+                                      }
+                                    }
+                                    try { localStorage.setItem(`meetlink_${id}`, url); } catch(_) {}
+                                    try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
+                                    try { const chan = new BroadcastChannel('meetlink'); chan.postMessage({ id, url }); chan.close(); } catch(_) {}
+                                    alert('Meeting link set');
+                                  }}
+                                  className="px-4 py-1.5 rounded-lg border-2 border-indigo-100 text-indigo-600 hover:bg-indigo-50 text-xs font-bold transition-colors"
+                                >
+                                  Set Link
+                                </button>
                               </div>
                             );
-                          }
-                          if (leftDoc) {
-                            return (
-                              <button onClick={() => openMeetFor(id)} className="px-4 py-1.5 rounded-lg border-2 border-indigo-600 text-indigo-700 hover:bg-indigo-50 text-xs font-bold transition-colors">Rejoin Meeting</button>
-                            );
-                          }
-                          return (
-                            <div className="flex items-center gap-2">
-                              <button onClick={() => openMeetFor(id)} className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 text-xs font-bold shadow-md transition-all active:scale-95">Join Meeting</button>
-                              <button
-                                onClick={async () => {
-                                  let url = String(localStorage.getItem(`meetlink_${id}`) || a.meetingLink || '').replace(/[`'\"]/g, '').trim();
-                                  if (!url || !/^https?:\/\//.test(url)) {
-                                    try {
-                                      const resp = await API.post(`/appointments/${id}/meet-link/generate`);
-                                      url = String(resp?.data?.url || '').trim();
-                                      if (!/^https?:\/\//.test(url)) { alert('Failed to generate meeting link'); return; }
-                                    } catch (e) {
-                                      alert(e.response?.data?.message || e.message || 'Failed to generate meeting link');
-                                      return;
-                                    }
-                                  }
-                                  try { localStorage.setItem(`meetlink_${id}`, url); } catch(_) {}
-                                  try { await API.put(`/appointments/${id}/meet-link`, { url }); } catch(_) {}
-                                  try { const chan = new BroadcastChannel('meetlink'); chan.postMessage({ id, url }); chan.close(); } catch(_) {}
-                                  alert('Meeting link set');
-                                }}
-                                className="px-4 py-1.5 rounded-lg border-2 border-indigo-100 text-indigo-600 hover:bg-indigo-50 text-xs font-bold transition-colors"
-                              >
-                                Set Link
-                              </button>
-                            </div>
-                          );
-                        })()
-                      )}
-                      {canFollowUp(a) && (
-                        <button
-                          onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
-                          className="px-4 py-1.5 rounded-lg border-2 border-green-600 text-green-700 hover:bg-green-50 text-xs font-bold transition-colors"
-                        >
-                          Follow-up
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          {/* Latest Bookings */}
-          <div className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-6 shadow-lg">
-            <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-              <div className="h-10 w-10 rounded-xl bg-blue-100/50 flex items-center justify-center shadow-sm">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0284C7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                </svg>
-              </div>
-              <span className="font-bold text-lg text-slate-800">Latest Bookings</span>
-            </div>
-            {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
-            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
-            <div className="space-y-4">
-              {latest.length === 0 && !loading ? (
-                <div className="text-slate-500 italic py-4 text-center">No recent bookings found</div>
-              ) : (
-                latest.map((a) => (
-                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border border-slate-100 bg-white rounded-xl px-4 py-3 hover:shadow-md transition-all duration-300">
-                    <div className="flex items-center gap-4 min-w-0">
-                      {(() => {
-                        const pid = String(a.patient?._id || a.patient || "");
-                        let img = String(a.patient?.photoBase64 || localStorage.getItem(`userPhotoBase64ById_${pid}`) || "");
-                        let src = img;
-                        if (img && !img.startsWith("data:") && !img.startsWith("http")) {
-                          src = `data:image/png;base64,${img}`;
-                        }
-                        const ok = src.startsWith("data:") || src.startsWith("http");
-                        return ok ? (
-                          <img src={src} alt="User" className="h-12 w-12 rounded-full object-cover border-2 border-white shadow-sm" />
-                        ) : (
-                          <div className="h-12 w-12 rounded-full border-2 border-white bg-indigo-50 flex items-center justify-center text-indigo-600 font-bold shadow-sm">
-                            {a.patient?.name ? a.patient.name.charAt(0).toUpperCase() : 'U'}
-                          </div>
-                        );
-                      })()}
-                      <div>
-                        <div className="font-bold text-slate-900 leading-tight">{a.patient?.name || "User"}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
-                        <div className="text-xs text-slate-500 mt-0.5">{(() => {
-                          const p = a.patient || {};
-                          if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
-                          const pid = String(p._id || a.patient || "");
-                          const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
-                          if (locAge) return `Age: ${locAge}`;
-                          const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
-                          if (!dob) return "";
-                          const d = new Date(dob);
-                          if (Number.isNaN(d.getTime())) return "";
-                          const t = new Date();
-                          let age = t.getFullYear() - d.getFullYear();
-                          const m = t.getMonth() - d.getMonth();
-                          if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
-                          return `Age: ${age}`;
-                        })()}</div>
-                        <div className="text-xs text-slate-400 font-medium">Booked for {new Date(a.date).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}</div>
-                      </div>
-                    </div>
-                    {String(a.status).toUpperCase() === "PENDING" ? (
-                      <div className="flex items-center gap-3 w-full sm:w-auto sm:justify-end">
-                        <button
-                          onClick={() => accept(a._id || a.id)}
-                          className="flex-1 sm:flex-none px-4 py-1.5 rounded-lg bg-green-600 text-white hover:bg-green-700 font-bold text-xs transition-all shadow-sm active:scale-95 flex items-center justify-center gap-1"
-                        >
-                          <span>Accept</span>
-                        </button>
-                        <button
-                          onClick={() => reject(a._id || a.id)}
-                          className="flex-1 sm:flex-none px-4 py-1.5 rounded-lg bg-white border-2 border-red-100 text-red-600 hover:border-red-200 hover:bg-red-50 font-bold text-xs transition-all flex items-center justify-center gap-1"
-                        >
-                          <span>Reject</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        {(() => {
-                          const s = String(a.status || "").toUpperCase();
-                          let colorClass = "bg-blue-100 text-blue-700";
-                          if (s === "CANCELLED") colorClass = "bg-red-100 text-red-700";
-                          else if (s === "CONFIRMED") colorClass = "bg-yellow-100 text-yellow-700";
-                          else if (s === "COMPLETED") colorClass = "bg-green-100 text-green-700";
-                          
-                          return (
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold ${colorClass}`}>
-                              {s === "CANCELLED" ? "Cancelled" : s === "CONFIRMED" ? "Confirmed" : "Completed"}
-                            </span>
-                          );
-                        })()}
+                          })()
+                        )}
                         {canFollowUp(a) && (
                           <button
                             onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
-                            className="px-3 py-1 rounded-lg border-2 border-green-600 text-green-700 hover:bg-green-50 font-bold text-xs transition-colors"
+                            className="px-4 py-1.5 rounded-lg border-2 border-green-600 text-green-700 hover:bg-green-50 text-xs font-bold transition-colors"
                           >
                             Follow-up
                           </button>
                         )}
                       </div>
-                    )}
-                  </div>
-                ))
-              )}
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
@@ -1518,9 +1388,72 @@ export default function DoctorDashboard() {
               {completed.length === 0 ? (
                 <div className="text-slate-500 italic py-4 text-center text-sm">No completed consultations</div>
               ) : (
-                <div className="space-y-2">
-                  {completed.map((a) => (
-                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-lg px-3 py-2 hover:shadow-sm transition-all">
+                <div className="max-h-80 overflow-y-auto custom-scrollbar pr-2">
+                  <div className="space-y-2">
+                    {completed.map((a) => (
+                      <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white/70 backdrop-blur-sm border border-slate-100 rounded-lg px-3 py-2 hover:shadow-sm transition-all">
+                        <div className="min-w-0">
+                          <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
+                          <div className="text-[10px] text-slate-500">{(() => {
+                            const p = a.patient || {};
+                            if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
+                            const pid = String(p._id || a.patient || "");
+                            const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
+                            if (locAge) return `Age: ${locAge}`;
+                            const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
+                            if (!dob) return "";
+                            const d = new Date(dob);
+                            if (Number.isNaN(d.getTime())) return "";
+                            const t = new Date();
+                            let age = t.getFullYear() - d.getFullYear();
+                            const m = t.getMonth() - d.getMonth();
+                            if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
+                            return `Age: ${age}`;
+                          })()}</div>
+                          <div className="text-[10px] text-slate-500">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
+                          {a.prescriptionText ? (
+                            <button onClick={() => nav(`/prescription/${a._id || a.id}`)} className="px-2 py-0.5 rounded-md border border-indigo-600 text-indigo-700 text-[10px] font-bold hover:bg-indigo-50">Prescription</button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400">No prescription</span>
+                          )}
+                          {canFollowUp(a) && (
+                            <button
+                              onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
+                              className="px-2 py-0.5 rounded-md border border-green-600 text-green-700 text-[10px] font-bold hover:bg-green-50"
+                            >
+                              Follow-up
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* All Appointments */}
+          <div id="all-appointments" className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-12 shadow-lg">
+            <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
+              <div className="h-10 w-10 rounded-xl bg-slate-100/50 flex items-center justify-center shadow-sm">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              </div>
+              <span className="font-bold text-lg text-slate-800">History & All Appointments</span>
+            </div>
+            {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
+            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
+            <div className="max-h-96 overflow-y-auto custom-scrollbar pr-2">
+              <div className="space-y-2">
+                {(list || []).length === 0 && !loading ? (
+                  <div className="text-slate-500 italic py-4 text-center">No appointment history found</div>
+                ) : (
+                  (list || []).slice().sort((x, y) => apptStartTs(y) - apptStartTs(x)).map((a) => (
+                    <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-100 rounded-xl px-4 py-2.5 hover:bg-slate-50/50 transition-colors">
                       <div className="min-w-0">
                         <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
                         <div className="text-[10px] text-slate-500">{(() => {
@@ -1539,86 +1472,27 @@ export default function DoctorDashboard() {
                           if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
                           return `Age: ${age}`;
                         })()}</div>
-                        <div className="text-[10px] text-slate-500">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
+                        <div className="text-[11px] text-slate-500 font-medium">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
                       </div>
-                      <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end mt-1 sm:mt-0">
-                        {a.prescriptionText ? (
-                          <button onClick={() => nav(`/prescription/${a._id || a.id}`)} className="px-2 py-0.5 rounded-md border border-indigo-600 text-indigo-700 text-[10px] font-bold hover:bg-indigo-50">Prescription</button>
-                        ) : (
-                          <span className="text-[10px] text-slate-400">No prescription</span>
-                        )}
-                        {canFollowUp(a) && (
-                          <button
-                            onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {} nav(`/doctor/appointments/${id}/followup`); } }}
-                            className="px-2 py-0.5 rounded-md border border-green-600 text-green-700 text-[10px] font-bold hover:bg-green-50"
-                          >
-                            Follow-up
-                          </button>
-                        )}
+                      <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
+                        {(() => {
+                          const s = String(a.status).toUpperCase();
+                          const cls = s === 'PENDING' ? 'bg-amber-100 text-amber-700' : s === 'CONFIRMED' ? 'bg-yellow-100 text-yellow-700' : s === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
+                          const txt = s === 'PENDING' ? 'Pending' : s === 'CONFIRMED' ? 'Confirmed' : s === 'COMPLETED' ? 'Completed' : 'Cancelled';
+                          return <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full ${cls}`}>{txt}</span>;
+                        })()}
+                        {(() => {
+                          const s = String(a.status).toUpperCase();
+                          const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
+                          return showPay ? (
+                            <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
+                          ) : null;
+                        })()}
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* All Appointments */}
-          <div id="all-appointments" className="max-w-5xl mx-auto bg-white/85 backdrop-blur-sm border border-white/30 rounded-2xl p-6 mb-12 shadow-lg">
-            <div className="flex items-center gap-2 text-slate-700 mb-4 border-b border-slate-100 pb-2">
-              <div className="h-10 w-10 rounded-xl bg-slate-100/50 flex items-center justify-center shadow-sm">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                </svg>
+                  ))
+                )}
               </div>
-              <span className="font-bold text-lg text-slate-800">History & All Appointments</span>
-            </div>
-            {loading && <div className="text-slate-600 animate-pulse">Loading...</div>}
-            {error && !loading && <div className="text-red-600 mb-3 text-sm">{error}</div>}
-            <div className="space-y-2">
-              {(list || []).length === 0 && !loading ? (
-                <div className="text-slate-500 italic py-4 text-center">No appointment history found</div>
-              ) : (
-                (list || []).slice().sort((x, y) => apptStartTs(y) - apptStartTs(x)).map((a) => (
-                  <div key={a._id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-slate-100 rounded-xl px-4 py-2.5 hover:bg-slate-50/50 transition-colors">
-                    <div className="min-w-0">
-                      <div className="font-bold text-slate-900 text-sm">{a.patient?.name || 'Patient'}{a.patient?.gender ? ` (${a.patient.gender.charAt(0).toUpperCase() + a.patient.gender.slice(1)})` : ""}</div>
-                      <div className="text-[10px] text-slate-500">{(() => {
-                        const p = a.patient || {};
-                        if (p.age !== undefined && p.age !== null && p.age !== "") return `Age: ${p.age}`;
-                        const pid = String(p._id || a.patient || "");
-                        const locAge = localStorage.getItem(`userAgeById_${pid}`) || "";
-                        if (locAge) return `Age: ${locAge}`;
-                        const dob = p.birthday || p.dob || p.dateOfBirth || localStorage.getItem(`userDobById_${pid}`) || "";
-                        if (!dob) return "";
-                        const d = new Date(dob);
-                        if (Number.isNaN(d.getTime())) return "";
-                        const t = new Date();
-                        let age = t.getFullYear() - d.getFullYear();
-                        const m = t.getMonth() - d.getMonth();
-                        if (m < 0 || (m === 0 && t.getDate() < d.getDate())) age--;
-                        return `Age: ${age}`;
-                      })()}</div>
-                      <div className="text-[11px] text-slate-500 font-medium">{a.date} • {a.startTime} • {a.type === 'online' ? 'Online' : 'Clinic'}</div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto sm:justify-end">
-                      {(() => {
-                        const s = String(a.status).toUpperCase();
-                        const cls = s === 'PENDING' ? 'bg-amber-100 text-amber-700' : s === 'CONFIRMED' ? 'bg-yellow-100 text-yellow-700' : s === 'COMPLETED' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-                        const txt = s === 'PENDING' ? 'Pending' : s === 'CONFIRMED' ? 'Confirmed' : s === 'COMPLETED' ? 'Completed' : 'Cancelled';
-                        return <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full ${cls}`}>{txt}</span>;
-                      })()}
-                      {(() => {
-                        const s = String(a.status).toUpperCase();
-                        const showPay = s !== 'CANCELLED' && s !== 'COMPLETED';
-                        return showPay ? (
-                          <span className={`inline-block text-[10px] font-bold px-2 py-1 rounded-full ${String(a.paymentStatus).toUpperCase() === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700'}`}>{String(a.paymentStatus).toUpperCase() === 'PAID' ? 'Paid' : 'Pending'}</span>
-                        ) : null;
-                      })()}
-                    </div>
-                  </div>
-                ))
-              )}
             </div>
           </div>
 

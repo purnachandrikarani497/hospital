@@ -210,9 +210,9 @@ export default function AdminAppointments() {
           </div>
 
           <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-white/40 shadow-[0_20px_50px_rgba(0,0,0,0.1)] overflow-hidden">
-            <div className="hidden sm:block overflow-x-auto">
+            <div className="hidden sm:block overflow-x-auto max-h-[70vh] custom-scrollbar pr-1">
               <table className="min-w-full text-sm">
-                <thead className="bg-gradient-to-r from-slate-50 to-blue-50/50 text-slate-700 border-b border-slate-100">
+                <thead className="bg-gradient-to-r from-slate-50 to-blue-50/50 text-slate-700 border-b border-slate-100 sticky top-0 z-10">
                   <tr>
                     <th className="px-6 py-5 text-center font-bold uppercase tracking-wider text-[11px]">S.NO</th>
                     <th className="px-6 py-5 text-left font-bold uppercase tracking-wider text-[11px]">Patient Name</th>

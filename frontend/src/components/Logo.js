@@ -2,10 +2,9 @@ import React from "react";
 
 export default function Logo({ size = 24, src }) {
   const s = Number(size) || 18;
-  const base = (process.env.PUBLIC_URL || "");
-  const def = base + "/uploads/image.png";
-  const altA = base + "/uploads/Screenshot 2025-12-03 162736.png";
-  const altB = base + "/uploads/Screenshot 2025-12-03 145101.png";
+  const def = "/uploads/image.png";
+  const altA = "/uploads/Screenshot 2025-12-03 162736.png";
+  const altB = "/uploads/Screenshot 2025-12-03 145101.png";
   const u = String(src || def);
   return (
     <div style={{ width: s, height: s }} className="relative inline-block">

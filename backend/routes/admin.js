@@ -126,11 +126,19 @@ router.post('/doctors/:id/reject', authenticate, authorize(['admin']), async (re
 
 // List all appointments (admin)
 router.get('/appointments', authenticate, authorize(['admin']), async (req, res) => {
-  const list = await Appointment.find({})
-    .populate({ path: 'doctor', select: 'name' })
-    .populate({ path: 'patient', select: 'name photoBase64 birthday gender age' })
-    .sort({ date: -1, startTime: -1 });
-  res.json(list);
+  const start = Date.now();
+  try {
+    const list = await Appointment.find({})
+      .select('-patientReports -preChat')
+      .populate({ path: 'doctor', select: 'name' })
+      .populate({ path: 'patient', select: 'name birthday gender' })
+      .sort({ date: -1, startTime: -1 });
+    console.log(`GET /api/admin/appointments took ${Date.now() - start}ms`);
+    res.json(list);
+  } catch (err) {
+    console.error('Error fetching admin appointments:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
 // List all patients (admin)

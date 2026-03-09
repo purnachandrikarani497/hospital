@@ -168,7 +168,13 @@ router.post("/:id/order", authenticate, async (req, res) => {
 
     try {
         const order = await instance.orders.create(options);
-        res.json({ ...order, key: rzpId });
+        // Explicitly return key properties to ensure they are present and clean
+        res.json({
+            id: order.id,
+            amount: order.amount,
+            currency: order.currency,
+            key: rzpId
+        });
     } catch (error) {
         console.error("Razorpay order creation error:", error);
         res.status(500).json({ message: error.message });
@@ -187,15 +193,22 @@ router.post("/:id/pay", authenticate, async (req, res) => {
     const rzpSecret = (process.env.RAZORPAY_KEY_SECRET || "").trim();
 
     try {
-        const text = razorpayOrderId + '|' + razorpayPaymentId;
-        const hmac = crypto.createHmac('sha256', rzpSecret);
-        hmac.update(text);
-        const digest = hmac.digest('hex');
+        if (razorpayPaymentId === "free_appointment") {
+            // Only allow "free_appointment" if the actual fee is 0
+            if (Number(appt.fee || 0) > 0) {
+              return res.status(400).json({ message: "This appointment requires payment" });
+            }
+        } else {
+            const text = razorpayOrderId + '|' + razorpayPaymentId;
+            const hmac = crypto.createHmac('sha256', rzpSecret);
+            hmac.update(text);
+            const digest = hmac.digest('hex');
 
-        if (digest !== razorpaySignature) {
-            appt.paymentStatus = 'FAILED';
-            await appt.save();
-            return res.status(400).json({ message: "Payment verification failed" });
+            if (digest !== razorpaySignature) {
+                appt.paymentStatus = 'FAILED';
+                await appt.save();
+                return res.status(400).json({ message: "Payment verification failed" });
+            }
         }
 
         // --- Payment is verified, proceed with booking confirmation ---

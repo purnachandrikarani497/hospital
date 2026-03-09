@@ -175,7 +175,7 @@ export default function AdminPendingDoctors() {
           </div>
           {error && <p className="text-red-600 mb-3">{error}</p>}
           {loading && <p className="text-slate-600">Loading...</p>}
-          <div className="space-y-4">
+          <div className="space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
             {list.map((row) => (
               <div key={row.user._id} className="glass-card p-4 card-hover">
                 <div className="flex items-center justify-between">

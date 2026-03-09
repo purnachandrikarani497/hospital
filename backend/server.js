@@ -31,17 +31,22 @@ const appointmentRoutes = require('./routes/appointments');
 const adminRoutes = require('./routes/admin');
 const specializationRoutes = require('./routes/specializations');
 const notificationRoutes = require('./routes/notifications');
+const supportRoutes = require('./routes/support');
 const jwt = require('jsonwebtoken');
 const { notifyChat } = require('./utils/notify');
 
 
 const app = express();
-const allowedOrigins = [process.env.CORS_ORIGIN_LOCAL, process.env.CORS_ORIGIN_PRODUCTION].filter(Boolean);
-const corsConfig = { origin: allowedOrigins.length ? allowedOrigins : '*' };
+const allowedOrigins = [process.env.CORS_ORIGIN_LOCAL, process.env.CORS_ORIGIN_PRODUCTION, 'http://localhost:3000'].filter(Boolean);
+const corsConfig = { origin: allowedOrigins.length ? allowedOrigins : '*', credentials: true };
 app.use(cors(corsConfig));
 app.options('*', cors(corsConfig));
-app.use(helmet());
-app.use(compression({ threshold: 0 }));
+app.use(helmet({
+  crossOriginResourcePolicy: false,
+  crossOriginOpenerPolicy: false,
+  contentSecurityPolicy: false, // Sometimes CSP can block the request as well
+}));
+app.use(compression());
 app.use((req, res, next) => {
   res.setHeader('Permissions-Policy', 'accelerometer=*, camera=*, geolocation=*, gyroscope=*, magnetometer=*, microphone=*, payment=*, usb=*');
   next();
@@ -205,6 +210,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/specializations', specializationRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/support', supportRoutes);
 
 
 app.get('/', (req, res) => res.send('DoctorConnect API'));
@@ -258,9 +264,10 @@ app.get('/sitemap.xml', async (req, res) => {
 
 try {
   if (String(process.env.SERVE_CLIENT || '').trim() === '1') {
-    const clientPath = path.join(__dirname, '../frontend/build');
+    const clientPath = path.join(__dirname, '../frontend/dist');
     app.use(express.static(clientPath, { maxAge: '30d', etag: true, lastModified: true }));
-    app.get('*', (req, res) => {
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api') || req.path.startsWith('/socket.io')) return next();
       res.set('Cache-Control', 'no-cache');
       res.sendFile(path.join(clientPath, 'index.html'));
     });
@@ -275,11 +282,12 @@ app.get('/api/stats', async (req, res) => {
     const DoctorProfile = require('./models/DoctorProfile');
     const appointments = await Appointment.countDocuments({});
     const doctors = await User.countDocuments({ role: 'doctor', isDoctorApproved: true });
+    const patients = await User.countDocuments({ role: 'patient' });
     const distinctSpecs = await DoctorProfile.distinct('specializations');
     const specialties = (Array.isArray(distinctSpecs) ? distinctSpecs : [])
       .map((s) => String(s || '').trim())
       .filter(Boolean).length;
-    res.json({ appointments, doctors, specialties });
+    res.json({ appointments, doctors, patients, specialties });
   } catch (e) {
     res.status(500).json({ message: e.message || 'Failed to fetch stats' });
   }

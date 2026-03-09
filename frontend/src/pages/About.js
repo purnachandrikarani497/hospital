@@ -143,8 +143,8 @@ export default function About() {
             <div className="text-xl sm:text-2xl md:text-3xl font-extrabold">Ready to get started?</div>
             <div className="text-indigo-100 mt-2">Search a specialist and book your appointment now.</div>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="/search" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Find Doctors</a>
+          <div className="flex items-center gap-4">Book an appoinment
+            <a href="/search" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition"></a>
             <a href="/contact" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Contact Us</a>
           </div>
         </div>

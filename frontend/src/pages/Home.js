@@ -6,12 +6,11 @@ import API from "../api";
 
 export default function Home() {
   const FALLBACK = "https://www.ecotowndiagnostics.com/wp-content/uploads/2024/06/818dce83d6.jpg";
-  const LOCAL = (process.env.PUBLIC_URL || "") + "/uploads/Screenshot 2025-12-03 145101.png";
+  const LOCAL = "/uploads/Screenshot 2025-12-03 145101.png";
   const CARD_FALLBACK = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
   const [heroSrc, setHeroSrc] = useState(FALLBACK);
   const [list, setList] = useState([]);
   const [error, setError] = useState("");
-  const [ratings, setRatings] = useState({});
   const didInit = useRef(false);
 
   const iconMap = {
@@ -117,48 +116,6 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    (async () => {
-      try {
-        const { data } = await API.get('/appointments/mine');
-        const map = {};
-        (data || []).forEach((a) => {
-          const id = String(a._id || a.id || '');
-          const did = String(a.doctor?._id || a.doctor || '');
-          if (!id || !did) return;
-          try {
-            const stars = Number(localStorage.getItem(`rate_${id}_stars`) || 0) || 0;
-            if (stars > 0) map[did] = stars;
-          } catch(_) {}
-        });
-        setRatings(map);
-      } catch(_) {}
-    })();
-  }, []);
-
-  useEffect(() => {
-    const ids = (list || []).map((d) => String(d.user?._id || '')).filter(Boolean);
-    if (!ids.length) return;
-    (async () => {
-      try {
-        const pairs = await Promise.all(ids.map(async (did) => {
-          try {
-            const res = await API.get(`/doctors/${did}/rating`);
-            const avg = Number(res?.data?.average || 0) || 0;
-            const rounded = Math.round(avg);
-            return [did, rounded];
-          } catch (_) {
-            return [did, 0];
-          }
-        }));
-        const map = Object.fromEntries(pairs);
-        setRatings((prev) => ({ ...prev, ...map }));
-      } catch (_) {}
-    })();
-  }, [list]);
-
-  useEffect(() => {
     const iv = setInterval(async () => {
       try {
         const { data } = await API.get('/doctors');
@@ -170,7 +127,8 @@ export default function Home() {
 
   useEffect(() => {
     const cleanup = [];
-    const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
+    const base = String(API.defaults.baseURL || "");
+    const origin = (base.startsWith("/") || !base) ? window.location.origin : base.replace(/\/(api)?$/, "");
     const w = window;
     const onReady = () => {
       try {
@@ -265,10 +223,9 @@ export default function Home() {
                 Empowering lives through revolutionary healthcare solutions that blend cutting-edge technology with heartfelt compassion.
               </p>
 
-              <div class="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
+              <div className="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
                 <Link to="/search" className="btn-gradient animate-bounce-in shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-                  Find Doctors
-                </Link>
+Book an appoinment        </Link>
                 <Link to="/contact" className="btn-gradient animate-bounce-in shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                   Contact Us
                 </Link>
@@ -339,10 +296,8 @@ export default function Home() {
                 const expB = Number(b.experienceYears ?? b.experience ?? 0) || 0;
                 const expA = Number(a.experienceYears ?? a.experience ?? 0) || 0;
                 if (expB !== expA) return expB - expA;
-                const didB = String(b.user?._id || "");
-                const didA = String(a.user?._id || "");
-                const rateB = Number(ratings[didB] || b.averageRating || 0) || 0;
-                const rateA = Number(ratings[didA] || a.averageRating || 0) || 0;
+                const rateB = Number(b.averageRating || 0) || 0;
+                const rateA = Number(a.averageRating || 0) || 0;
                 if (rateB !== rateA) return rateB - rateA;
                 const tb = new Date(b.createdAt || 0).getTime();
                 const ta = new Date(a.createdAt || 0).getTime();
@@ -375,10 +330,10 @@ export default function Home() {
                     <h3 className="text-lg font-semibold text-gray-900">{`Dr. ${d.user?.name || ''}`}</h3>
                     <p className="text-gray-600 text-sm mt-1">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
                     {d.experienceYears ? (<div className="text-xs text-gray-700 mt-1">{`${d.experienceYears} Years`}</div>) : null}
-                    {(() => { const did = String(d.user?._id || ''); const s = ratings[did] || 0; if (!s) return null; return (
+                    {(() => { const avg = d.averageRating || 0; if (!avg) return null; return (
                       <div className="mt-2 flex items-center gap-1 text-amber-500">
                         {[1,2,3,4,5].map((n) => (
-                          <svg key={n} className={`w-4 h-4 ${s>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                          <svg key={n} className={`w-4 h-4 ${avg>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
                         ))}
                       </div>
                     ); })()}
@@ -459,7 +414,7 @@ export default function Home() {
                 <div className="font-semibold text-slate-900 mb-2 uppercase tracking-wide">Company</div>
                 <div className="space-y-2 text-slate-700 text-sm">
                   <Link to="/" className="hover:text-indigo-700 transition-colors duration-200 block">Home</Link>
-                  <Link to="/search" className="hover:text-indigo-700 transition-colors duration-200 block">Find Doctors</Link>
+                  <Link to="/search" className="hover:text-indigo-700 transition-colors duration-200 block">Book an appoinment</Link>
                   <Link to="/about" className="hover:text-indigo-700 transition-colors duration-200 block">About us</Link>
                   <Link to="/contact" className="hover:text-indigo-700 transition-colors duration-200 block">Contact</Link>
                 </div>

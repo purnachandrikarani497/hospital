@@ -52,6 +52,11 @@ export default function Payment() {
 
     try {
         const { data: order } = await API.post(`/appointments/${id}/order`, { includeServiceFee });
+        console.log("Order details received:", order);
+
+        if (!order || !order.id) {
+          throw new Error("Failed to create payment order. Please try again.");
+        }
 
         if (!sdkReady || !window.Razorpay) {
           alert("Payment system not ready. Please try again.");
@@ -59,17 +64,24 @@ export default function Payment() {
           return;
         }
 
-        // Use key from order (sent by backend) or fall back to test key if missing
-        const rzpKey = order.key || "rzp_test_RQ739na1YxOpy5";
+        // Use key from order (sent by backend) or fall back to environment variable
+        const rzpKey = order.key || process.env.REACT_APP_RAZORPAY_KEY_ID;
+
+        // Sanitize prefill data
+        const uId = localStorage.getItem("userId");
+        const rawName = localStorage.getItem(`userNameById_${uId}`);
+        const rawEmail = localStorage.getItem(`userEmailById_${uId}`);
+        const rawPhone = localStorage.getItem(`userPhoneById_${uId}`);
 
         const options = {
-          key: "rzp_test_RQ739na1YxOpy5", // Force test key
+          key: rzpKey,
           amount: order.amount,
-          currency: "INR",
+          currency: order.currency || "INR",
           name: "HospoZen",
           description: `Appointment with ${appt.doctor?.name || "Doctor"}`,
           order_id: order.id,
           handler: async (response) => {
+            console.log("Payment handler response:", response);
             try {
               await API.post(`/appointments/${id}/pay`, { 
                   razorpayPaymentId: response.razorpay_payment_id,
@@ -79,26 +91,34 @@ export default function Payment() {
               alert("Payment successful. Appointment confirmed.");
               nav("/appointments");
             } catch (err) {
+              console.error("Payment verification failed:", err);
               alert(err.response?.data?.message || err.message);
             } finally {
               setLoading(false);
             }
           },
           prefill: {
-            name: localStorage.getItem(`userNameById_${localStorage.getItem("userId")}`) || "Patient",
-            email: localStorage.getItem(`userEmailById_${localStorage.getItem("userId")}`) || "patient@example.com",
-            contact: localStorage.getItem(`userPhoneById_${localStorage.getItem("userId")}`) || "9999999999",
+            name: (rawName && rawName.trim()) || "Patient",
+            email: (rawEmail && rawEmail.trim()) || "patient@example.com",
+            contact: (rawPhone && rawPhone.trim().replace(/\D/g, '')) || "9999999999",
           },
           theme: { color: "#4F46E5" },
-          modal: { ondismiss: () => setLoading(false) }
+          modal: { ondismiss: () => {
+            console.log("Payment modal closed by user");
+            setLoading(false);
+          } }
         };
+
+        console.log("Initializing Razorpay with options:", { ...options, key: "HIDDEN" });
         const rzp = new window.Razorpay(options);
-        rzp.on("payment.failed", () => {
+        rzp.on("payment.failed", (resp) => {
+          console.error("Payment failed event:", resp);
           alert("Payment failed. Please try again.");
           setLoading(false);
         });
         rzp.open();
     } catch (error) {
+        console.error("Error starting payment process:", error);
         alert(error.response?.data?.message || error.message);
         setLoading(false);
     }

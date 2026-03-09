@@ -13,13 +13,13 @@ const originFromEnv = isProd
 const configured = String(originFromEnv).trim();
 const isLocalhost = typeof window !== "undefined" && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
 const defaultProtocol = (typeof window !== "undefined" && window.location.protocol === "https:") ? "https" : "http";
-const inferred = (typeof window !== "undefined")
-  ? String(window.location.origin).replace(/\/$/, "")
-  : (defaultProtocol + "://localhost:5000");
-const base = toApiBase(configured || inferred);
+const inferred = isLocalhost 
+  ? (defaultProtocol + "://localhost:5000")
+  : (typeof window !== "undefined" ? String(window.location.origin).replace(/\/$/, "") : (defaultProtocol + "://localhost:5000"));
+const base = isLocalhost ? "/api" : toApiBase(configured || inferred);
 const API = axios.create({ baseURL: base });
 
-API.defaults.timeout = 8000;
+API.defaults.timeout = 30000;
 
 API.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");

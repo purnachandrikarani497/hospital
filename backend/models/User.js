@@ -16,5 +16,8 @@ const userSchema = new mongoose.Schema({
   resetOtpExpires: { type: Date },
 }, { timestamps: true });
 
+userSchema.index({ role: 1, isDoctorApproved: 1 });
+userSchema.index({ name: 'text' }); // Text index for faster name search
+
 
 module.exports = mongoose.model('User', userSchema);

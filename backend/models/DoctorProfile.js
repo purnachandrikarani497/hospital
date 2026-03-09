@@ -22,5 +22,10 @@ languages: [String],
  isBusy: { type: Boolean }
 }, { timestamps: true });
 
+doctorProfileSchema.index({ user: 1 });
+doctorProfileSchema.index({ specializations: 1 });
+doctorProfileSchema.index({ 'clinic.city': 1 });
+doctorProfileSchema.index({ isOnline: 1 });
+
 
 module.exports = mongoose.model('DoctorProfile', doctorProfileSchema);

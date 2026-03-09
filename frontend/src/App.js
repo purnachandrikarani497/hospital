@@ -4,6 +4,7 @@ import Logo from "./components/Logo";
 import NotificationManager from "./components/NotificationManager";
 import API from "./api";
 import { useState, useEffect, Suspense, lazy } from "react";
+import SupportModal from "./components/SupportModal";
 // ggg
 
 const Login = lazy(() => import("./pages/Login"));
@@ -25,6 +26,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminAppointments = lazy(() => import("./pages/AdminAppointments"));
 const AdminAddDoctor = lazy(() => import("./pages/AdminAddDoctor"));
 const AdminSpecializations = lazy(() => import("./pages/AdminSpecializations"));
+const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const SearchDoctors = lazy(() => import("./pages/SearchDoctors"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Appointments = lazy(() => import("./pages/Appointments"));
@@ -32,8 +34,16 @@ const AppointmentDetails = lazy(() => import("./pages/AppointmentDetails"));
 const FollowUpDetails = lazy(() => import("./pages/FollowUpDetails"));
 const DoctorAppointmentDocuments = lazy(() => import("./pages/DoctorAppointmentDocuments"));
 
+function RequireRole({ role, children }) {
+  const token = localStorage.getItem('token');
+  const userRole = localStorage.getItem('userRole');
+  if (!token) return <Navigate to="/login" replace />;
+  if (role && userRole !== role) return <Navigate to="/" replace />;
+  return children;
+}
 
-function Header() {
+
+function Header({ onSupportOpen }) {
   const location = useLocation();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
@@ -175,75 +185,96 @@ function Header() {
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
         <div className="flex items-center justify-between h-16">
-          {/* Enhanced Logo Section */}
-          <Link to="/" aria-label="Go to HospoZen Home" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
-              <div className="text-white">
-                <Logo size={20} />
+          {/* Left Section: Logo + Nav */}
+          <div className="flex items-center gap-10">
+            <Link to="/" aria-label="Go to HospoZen Home" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
+              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
+                <div className="text-white">
+                  <Logo size={20} />
+                </div>
               </div>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
-                HospoZen
-              </span>
-             
-            </div>
-          </Link>
+              <div className="flex flex-col">
+                <span className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 bg-clip-text text-transparent">
+                  HospoZen
+                </span>
+              </div>
+            </Link>
 
-          {/* Enhanced Desktop Navigation */}
-          <nav className="absolute left-1/2 -translate-x-1/2 hidden lg:flex items-center space-x-10">
-            {(() => {
-              const p = location.pathname;
-              const linkClass = (active) =>
-                active
-                  ? "relative px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
-                  : "relative px-4 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-xl hover:bg-blue-50/50 transition-all duration-300 hover:scale-105";
+            {/* Enhanced Desktop Navigation */}
+            <nav className="hidden lg:flex items-center space-x-10">
+              {(() => {
+                const p = location.pathname;
+                const linkClass = (active) =>
+                  active
+                    ? "relative px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
+                    : "relative px-4 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-xl hover:bg-blue-50/50 transition-all duration-300 hover:scale-105";
 
-              return (
-                <>
-                  <Link to="/" className={linkClass(p === "/")}>
-                    <span className="relative z-10">Home</span>
-                    {p === "/" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                  <Link to="/search" className={linkClass(p.startsWith("/search"))}>
-                    <span className="relative z-10">Find Doctors</span>
-                    {p.startsWith("/search") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>
-                  {token ? (
-                    <>
-                      <Link to="/appointments" className={linkClass(p.startsWith("/appointments"))}>
-                        <span className="relative z-10">My Appointments</span>
-                        {p.startsWith("/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                      </Link>
-                      <Link to="/appointments?view=prescriptions" className={linkClass(p.startsWith("/appointments?view=prescriptions"))}>
-                        <span className="relative z-10">Prescriptions</span>
-                        {p.startsWith("/appointments?view=prescriptions") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                      </Link>
-                    </>
-                  ) : (
-                    <>
-                      <Link to="/about" className={linkClass(p.startsWith("/about"))}>
-                        <span className="relative z-10">About</span>
-                        {p.startsWith("/about") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                      </Link>
-                      <Link to="/contact" className={linkClass(p.startsWith("/contact"))}>
-                        <span className="relative z-10">Contact</span>
-                        {p.startsWith("/contact") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                      </Link>
-                    </>
-                  )}
-                  {showAdminLink && <Link to="/admin/login" className={linkClass(p.startsWith("/admin"))}>
-                    <span className="relative z-10">Admin</span>
-                    {p.startsWith("/admin") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                  </Link>}
-                </>
-              );
-            })()}
-          </nav>
+                return (
+                  <>
+                    <Link to="/" className={linkClass(p === "/")}>
+                      <span className="relative z-10">Home</span>
+                      {p === "/" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                    <Link to="/search" className={linkClass(p.startsWith("/search"))}>
+                      <span className="relative z-10">Book an appoinment</span>
+                      {p.startsWith("/search") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>
+                    {token ? (
+                      <>
+                        <Link to="/appointments" className={linkClass(p.startsWith("/appointments"))}>
+                          <span className="relative z-10">My Appointments</span>
+                          {p.startsWith("/appointments") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                        </Link>
+                        <Link to="/appointments?view=prescriptions" className={linkClass(p.startsWith("/appointments?view=prescriptions"))}>
+                          <span className="relative z-10">Prescriptions</span>
+                          {p.startsWith("/appointments?view=prescriptions") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        <Link to="/about" className={linkClass(p.startsWith("/about"))}>
+                          <span className="relative z-10">About</span>
+                          {p.startsWith("/about") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                        </Link>
+                        <Link to="/contact" className={linkClass(p.startsWith("/contact"))}>
+                          <span className="relative z-10">Contact</span>
+                          {p.startsWith("/contact") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                        </Link>
+                      </>
+                    )}
+                    {showAdminLink && <Link to="/admin/login" className={linkClass(p.startsWith("/admin"))}>
+                      <span className="relative z-10">Admin</span>
+                      {p.startsWith("/admin") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+                    </Link>}
+                  </>
+                );
+              })()}
+            </nav>
+          </div>
 
-          {/* Enhanced User Actions */}
+          {/* Right Section: Contact + User Actions */}
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* Enhanced Mobile Menu Button */}
+            {/* Contact Info */}
+            <div className="hidden lg:flex items-center gap-4 border-r border-gray-200 pr-4">
+              <div className="flex flex-col items-start text-sm font-bold text-gray-800">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-blue-600">HELPLINE:</span>
+                  <span>+91 98765 43210</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-blue-600">EMAIL:</span>
+                  <span>hospozen@gmail.com</span>
+                </div>
+              </div>
+              <button
+                onClick={onSupportOpen}
+                className="px-4 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
+              >
+                SUPPORT
+              </button>
+            </div>
+
+            {/* Mobile Menu Button */}
             <button
               className="lg:hidden p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300"
               aria-label="Toggle navigation menu"
@@ -549,7 +580,7 @@ function Header() {
             <nav className="flex flex-col space-y-4 px-6">
               {[
                 { path: '/', label: 'Home' },
-                { path: '/search', label: 'Find Doctors' },
+                { path: '/search', label: 'Book an appoinment' },
                 { path: '/about', label: 'About' },
                 { path: '/contact', label: 'Contact' }
               ].map((item) => (
@@ -595,6 +626,7 @@ function Header() {
 }
 
 function App() {
+  const [supportOpen, setSupportOpen] = useState(false);
   const MetaManager = () => {
     const location = useLocation();
     const setMeta = (name, content) => {
@@ -615,10 +647,10 @@ function App() {
     const origin = window.location.origin || '';
     const url = origin + path + (location.search || '');
     const metaByPath = () => {
-      if (path === '/') return { title: 'HospoZen | Book Doctors Online', desc: 'Find verified doctors and book appointments online with HospoZen.', keys: 'book doctors online, find doctors, healthcare appointments, telemedicine' };
+      if (path === '/') return { title: 'HospoZen | Book Doctors Online', desc: 'Find verified doctors and book appointments online with HospoZen.', keys: 'book doctors online,Book an appoinment, healthcare appointments, telemedicine' };
       if (path.startsWith('/about')) return { title: 'About HospoZen | Healthcare Platform', desc: 'Learn about HospoZen and our mission to modernize healthcare.', keys: 'about hospozen, healthcare platform, company info' };
       if (path.startsWith('/contact')) return { title: 'Contact HospoZen | Support', desc: 'Get support and contact the HospoZen team.', keys: 'contact hospozen, support, help' };
-      if (path.startsWith('/search')) return { title: 'Find Doctors by Specialization | HospoZen', desc: 'Search and filter doctors by specialization, experience, and ratings.', keys: 'find doctors, specializations, doctor search, ratings' };
+      if (path.startsWith('/search')) return { title: 'Book an appoinment by Specialization | HospoZen', desc: 'Search and filter doctors by specialization, experience, and ratings.', keys: 'Book an appoinment, specializations, doctor search, ratings' };
       if (path.startsWith('/doctor/')) return { title: 'Doctor Profile | HospoZen', desc: 'View doctor details, specialization, experience, and book an appointment.', keys: 'doctor profile, book appointment, specialization' };
       if (path.startsWith('/appointments')) return { title: 'My Appointments | HospoZen', desc: 'Manage upcoming and past appointments securely.', keys: 'appointments, patient dashboard, manage bookings' };
       if (path.startsWith('/pay')) return { title: 'Secure Payment | HospoZen', desc: 'Complete your consultation payment securely.', keys: 'payment, secure checkout, consultation' };
@@ -664,8 +696,9 @@ function App() {
   return (
     <HelmetProvider>
       <BrowserRouter>
-        <Header />
+        <Header onSupportOpen={() => setSupportOpen(true)} />
         <MetaManager />
+        <SupportModal isOpen={supportOpen} onClose={() => setSupportOpen(false)} />
         <div className="pt-16 px-4 sm:px-6 page-gradient">
           <Suspense fallback={<div className="p-8 text-center">Loading…</div>}>
             <Routes>
@@ -681,19 +714,20 @@ function App() {
           <Route path="/admin/doctors/:id" element={<DoctorDetails />} />
           <Route path="/book/:id" element={<Navigate to="/search" />} />
           <Route path="/pay/:id" element={<Payment />} />
-          <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-          <Route path="/doctor/appointments" element={<DoctorToday />} />
-          <Route path="/doctor/appointments/:id/documents" element={<DoctorAppointmentDocuments />} />
-          <Route path="/doctor/appointments/:id/followup" element={<FollowUpDetails actor="doctor" backTo="/doctor/appointments" />} />
-          <Route path="/doctor/profile" element={<DoctorProfile />} />
-          <Route path="/prescription/:id" element={<Prescription />} />
-          <Route path="/admin/doctors/pending" element={<AdminPendingDoctors />} />
+          <Route path="/doctor/dashboard" element={<RequireRole role="doctor"><DoctorDashboard /></RequireRole>} />
+          <Route path="/doctor/appointments" element={<RequireRole role="doctor"><DoctorToday /></RequireRole>} />
+          <Route path="/doctor/appointments/:id/documents" element={<RequireRole role="doctor"><DoctorAppointmentDocuments /></RequireRole>} />
+          <Route path="/doctor/appointments/:id/followup" element={<RequireRole role="doctor"><FollowUpDetails actor="doctor" backTo="/doctor/appointments" /></RequireRole>} />
+          <Route path="/doctor/profile" element={<RequireRole role="doctor"><DoctorProfile /></RequireRole>} />
+          <Route path="/prescription/:id" element={<RequireRole role="doctor"><Prescription /></RequireRole>} />
+          <Route path="/admin/doctors/pending" element={<RequireRole role="admin"><AdminPendingDoctors /></RequireRole>} />
           <Route path="/admin" element={<Navigate to="/login" />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/appointments" element={<AdminAppointments />} />
-          <Route path="/admin/add-doctor" element={<AdminAddDoctor />} />
-          <Route path="/admin/specializations" element={<AdminSpecializations />} />
-          <Route path="/admin/doctors" element={<SearchDoctors />} />
+          <Route path="/admin/dashboard" element={<RequireRole role="admin"><AdminDashboard /></RequireRole>} />
+          <Route path="/admin/appointments" element={<RequireRole role="admin"><AdminAppointments /></RequireRole>} />
+          <Route path="/admin/add-doctor" element={<RequireRole role="admin"><AdminAddDoctor /></RequireRole>} />
+          <Route path="/admin/specializations" element={<RequireRole role="admin"><AdminSpecializations /></RequireRole>} />
+          <Route path="/admin/support" element={<RequireRole role="admin"><AdminSupport /></RequireRole>} />
+          <Route path="/admin/doctors" element={<RequireRole role="admin"><SearchDoctors /></RequireRole>} />
           <Route path="/forgot" element={<ForgotPassword />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/appointments" element={<Appointments />} />

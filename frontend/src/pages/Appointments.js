@@ -348,7 +348,8 @@ export default function Appointments() {
 
   useEffect(() => {
     const cleanup = [];
-    const origin = String(API.defaults.baseURL || "").replace(/\/(api)?$/, "");
+    const base = String(API.defaults.baseURL || "");
+    const origin = (base.startsWith("/") || !base) ? window.location.origin : base.replace(/\/(api)?$/, "");
     const w = window;
     const onReady = () => {
       try {
@@ -788,7 +789,7 @@ export default function Appointments() {
         ) : (isPrescriptionsView ? presItems.length === 0 : list.length === 0) ? (
           <div className="p-4 text-slate-600">{isPrescriptionsView ? 'No prescriptions found' : 'No appointments found'}</div>
         ) : (
-          <div className="divide-y">
+          <div className="divide-y max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
             {(isPrescriptionsView ? presItems : list).map((a) => (
               <div key={a._id} className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 card-hover">
                 <div className="flex items-center gap-3 sm:gap-4">
@@ -820,9 +821,10 @@ export default function Appointments() {
                         );
                       })()}
                     </div>
+                    <div className="text-sm text-slate-700">Specialization: <span className="text-slate-900">{profiles.get(String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</span></div>
                     <div className="text-sm text-slate-700">Date & Time: <span className="text-slate-900">{isPrescriptionsView ? `${a.date} | ${a.time}` : `${a.date} | ${a.startTime}`}</span></div>
                     {!isPrescriptionsView && (
-                      <div className="text-sm text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{a.patient?.gender || "--"}</span></div>
+                      <div className="text-sm text-slate-700">Gender: <span className="text-slate-900 text-capitalize">{profiles.get(String(a.doctor?._id || a.doctor))?.user?.gender || "--"}</span></div>
                     )}
                     {!isPrescriptionsView && (() => {
                       try {

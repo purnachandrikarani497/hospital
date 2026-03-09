@@ -357,6 +357,7 @@ export default function DoctorDetails() {
             <div className="mt-3 flex flex-wrap gap-2">
               {specList && <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100">{specList}</span>}
               {experienceYears && <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-100">{experienceYears}</span>}
+              {doctor?.user?.gender && <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 text-capitalize">{doctor.user.gender}</span>}
             </div>
             
             <div className="mt-4">
@@ -364,17 +365,22 @@ export default function DoctorDetails() {
               <p className="text-slate-700 text-sm mt-1">{about}</p>
             </div>
             {fee !== "" && (<div className="mt-4 text-slate-700">Appointment fee: ₹{fee}</div>)}
-            {(() => { const avg = Number(doctor?.averageRating ?? ratingAvg ?? 0) || 0; const count = Number(ratingCount || 0) || 0; const s = Math.round(avg); return (
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex items-center gap-1">
-                  {[1,2,3,4,5].map((n) => (
-                    <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                  ))}
+            {(() => { 
+              const avg = Number(doctor?.averageRating ?? ratingAvg ?? 0) || 0; 
+              const count = Number(ratingCount || 0) || 0; 
+              const s = Math.round(avg); 
+              return (
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex items-center gap-1">
+                    {[1,2,3,4,5].map((n) => (
+                      <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                    ))}
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">{avg > 0 ? avg.toFixed(1) : "0.0"}</span>
+                  <span className="text-sm text-slate-600">{count > 0 ? `(${count} reviews)` : "(No reviews yet)"}</span>
                 </div>
-                <span className="text-sm font-medium text-slate-700">{avg.toFixed(1)}</span>
-                {count > 0 && <span className="text-sm text-slate-600">({count} reviews)</span>}
-              </div>
-            ); })()}
+              ); 
+            })()}
             {myStars > 0 && (
               <div className="mt-4 flex items-center gap-1 text-amber-500">
                 {[1,2,3,4,5].map((n) => (
@@ -633,7 +639,7 @@ export default function DoctorDetails() {
               <div className="font-semibold text-slate-900 mb-2 uppercase tracking-wide">Company</div>
               <div className="flex flex-col space-y-2 text-slate-700 text-sm">
                 <Link to="/" className="hover:text-indigo-700 block">Home</Link>
-                <Link to="/search" className="hover:text-indigo-700 block">Find Doctors</Link>
+                <Link to="/search" className="hover:text-indigo-700 block"></Link>
                 <Link to="/about" className="hover:text-indigo-700 block">About us</Link>
                 <Link to="/contact" className="hover:text-indigo-700 block">Contact</Link>
               </div>

@@ -8,58 +8,95 @@ const Appointment = require('../models/Appointment');
 
 // Public: search doctors
 router.get('/', async (req, res) => {
-  const { q, city, specialization, user } = req.query;
-  const filter = {};
-  if (city) filter['clinic.city'] = new RegExp(city, 'i');
-  if (specialization) filter['specializations'] = specialization;
-  if (user && /^[0-9a-fA-F]{24}$/.test(String(user))) filter['user'] = user;
-
-  let doctors = await DoctorProfile.find(filter).populate({
-    path: 'user',
-    select: '-passwordHash',
-    match: { role: 'doctor', isDoctorApproved: true }
-  });
-
-  doctors = doctors.filter(d => !!d.user);
-
-  if (q) {
-    const qRegex = new RegExp(String(q), 'i');
-    doctors = doctors.filter(d =>
-      qRegex.test(d.user?.name || '') ||
-      qRegex.test(d.clinic?.name || '') ||
-      (d.specializations || []).some(s => qRegex.test(String(s)))
-    );
-  }
-
+  const start = Date.now();
   try {
-    const ids = doctors.map((d) => d.user?._id).filter(Boolean).map((x) => require('mongoose').Types.ObjectId(String(x)));
-    if (ids.length) {
-      const stats = await Appointment.aggregate([
-        { $match: { doctor: { $in: ids }, ratingStars: { $gte: 1 } } },
-        { $group: { _id: '$doctor', avg: { $avg: '$ratingStars' } } }
-      ]);
-      const map = new Map(stats.map((s) => [String(s._id), s.avg ? Number(s.avg.toFixed(1)) : 0]));
-      doctors = doctors.map((d) => {
-        const obj = d.toObject ? d.toObject() : d;
-        const did = String(d.user?._id || '');
-        obj.averageRating = map.has(did) ? map.get(did) : 0;
-        return obj;
-      });
-    } else {
-      doctors = doctors.map((d) => {
-        const obj = d.toObject ? d.toObject() : d;
-        obj.averageRating = 0;
-        return obj;
-      });
+    const { q, city, specialization, user } = req.query;
+    const mongoose = require('mongoose');
+
+    // 1. Filter approved doctors only
+    const userMatch = { role: 'doctor', isDoctorApproved: true };
+    if (q) {
+      userMatch.$or = [
+        { name: new RegExp(String(q), 'i') }
+      ];
     }
-  } catch (_) {
-    doctors = doctors.map((d) => {
-      const obj = d.toObject ? d.toObject() : d;
-      obj.averageRating = 0;
-      return obj;
+
+    const pipeline = [
+      // Join with User
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'userData'
+        }
+      },
+      { $unwind: '$userData' },
+      // Filter by approved doctor
+      {
+        $match: {
+          'userData.role': 'doctor',
+          'userData.isDoctorApproved': true
+        }
+      }
+    ];
+
+    // 2. Apply additional filters
+    const profileMatch = {};
+    if (city) profileMatch['clinic.city'] = new RegExp(city, 'i');
+    if (specialization) profileMatch['specializations'] = specialization;
+    if (user && /^[0-9a-fA-F]{24}$/.test(String(user))) profileMatch['user'] = new mongoose.Types.ObjectId(String(user));
+    
+    if (q) {
+      const qRegex = new RegExp(String(q), 'i');
+      profileMatch.$or = [
+        { 'userData.name': qRegex },
+        { 'clinic.name': qRegex },
+        { 'specializations': qRegex }
+      ];
+    }
+
+    if (Object.keys(profileMatch).length > 0) {
+      pipeline.push({ $match: profileMatch });
+    }
+
+    // 3. Add rating aggregation (lookup from appointments)
+    pipeline.push({
+      $lookup: {
+        from: 'appointments',
+        let: { userId: '$user' },
+        pipeline: [
+          { 
+            $match: { 
+              $expr: { $eq: ['$doctor', '$$userId'] },
+              ratingStars: { $gte: 1 }
+            } 
+          },
+          { $group: { _id: null, avg: { $avg: '$ratingStars' } } }
+        ],
+        as: 'ratingInfo'
+      }
     });
+
+    pipeline.push({
+      $addFields: {
+        averageRating: { 
+          $ifNull: [{ $round: [{ $arrayElemAt: ['$ratingInfo.avg', 0] }, 1] }, 0] 
+        },
+        // Reformat user for backward compatibility
+        user: '$userData'
+      }
+    });
+
+    pipeline.push({ $project: { userData: 0, ratingInfo: 0, 'user.passwordHash': 0 } });
+
+    const doctors = await DoctorProfile.aggregate(pipeline);
+    console.log(`GET /api/doctors took ${Date.now() - start}ms (aggregation)`);
+    res.json(doctors);
+  } catch (err) {
+    console.error('Error in optimized doctor search:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
   }
-  res.json(doctors);
 });
 
 

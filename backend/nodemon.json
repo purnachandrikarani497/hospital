@@ -1,0 +1,5 @@
+{
+  "ignore": ["*.test.js", "fixtures/**/*", "uploads/**/*", "node_modules/**/*"],
+  "watch": ["."],
+  "ext": "js,mjs,json"
+}
