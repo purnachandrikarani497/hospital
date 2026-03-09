@@ -159,22 +159,10 @@ export default function Appointments() {
         const { data } = await API.get("/appointments/mine");
         const arr = Array.isArray(data) ? data : [];
         setList(arr);
-        const ids = Array.from(new Set(arr.map((a) => {
-          try {
-            return String(typeof a.doctor === 'string' ? a.doctor : (a.doctor?._id || a.doctor?.id || ''));
-          } catch(_) { return ''; }
-        }).values())).filter(Boolean);
-        if (ids.length) {
-          const resps = await Promise.all(ids.map((id) => API.get(`/doctors?user=${id}`).catch(() => ({ data: [] }))));
-          const map = new Map();
-          ids.forEach((id, idx) => {
-            const first = Array.isArray(resps[idx]?.data) ? resps[idx].data[0] : null;
-            if (first) map.set(String(id), first);
-          });
-          setProfiles(map);
-        } else {
-          setProfiles(new Map());
-        }
+        
+        // Skip fetching doctor profiles separately for every appointment
+        // We only need the doctor's name which is already populated
+        setProfiles(new Map());
       } catch (e) {
         if (e.message === 'canceled') return;
         setError(e.response?.data?.message || e.message || "Failed to load");
@@ -185,23 +173,9 @@ export default function Appointments() {
   }, [nav]);
 
   useEffect(() => {
-    try {
-      const needed = Array.from(new Set((presItems || []).map((x) => String(x.docId || '')).filter(Boolean))).filter((id) => !profiles.has(id));
-      if (!needed.length) return;
-      (async () => {
-        try {
-          const resps = await Promise.all(needed.map((id) => API.get(`/doctors?user=${id}`).catch(() => ({ data: [] }))));
-          setProfiles((prev) => {
-            const next = new Map(prev);
-            needed.forEach((id, idx) => {
-              const first = Array.isArray(resps[idx]?.data) ? resps[idx].data[0] : null;
-              if (first) next.set(String(id), first);
-            });
-            return next;
-          });
-        } catch (_) {}
-      })();
-    } catch (_) {}
+    // Optimization: avoid fetching separate doctor profiles
+    // The main appointment list already contains names
+    return;
   }, [presItems, profiles]);
 
   useEffect(() => {

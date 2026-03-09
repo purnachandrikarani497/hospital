@@ -527,15 +527,25 @@ router.put("/patient-details", authenticate, async (req, res) => {
 // View my appointments (patient or doctor)
 // -----------------------------------
 router.get("/mine", authenticate, async (req, res) => {
-  const filter = req.user.role === "doctor"
-    ? { doctor: req.user._id }
-    : { patient: req.user._id };
+  const start = Date.now();
+  try {
+    const filter = req.user.role === "doctor"
+      ? { doctor: req.user._id }
+      : { patient: req.user._id };
 
-  const list = await Appointment.find(filter)
-    .populate("doctor", "name")
-    .populate("patient", "name photoBase64 birthday gender");
+    // Optimize: only populate essential fields, exclude large blobs
+    const list = await Appointment.find(filter)
+      .select('-patientReports -preChat')
+      .populate("doctor", "name")
+      .populate("patient", "name birthday gender")
+      .sort({ date: -1, startTime: -1 });
 
-  res.json(list);
+    console.log(`GET /api/appointments/mine took ${Date.now() - start}ms`);
+    res.json(list);
+  } catch (err) {
+    console.error('Error fetching my appointments:', err);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
 });
 
 router.get("/:id", authenticate, async (req, res) => {
