@@ -45,7 +45,7 @@ export default function SupportModal({ isOpen, onClose }) {
           {/* Left Side: Content */}
           <div className="flex-1 p-8 md:p-12">
             <h2 className="text-3xl md:text-4xl font-black text-slate-800 leading-tight mb-4">
-              Have Questions?
+              Request call back
             </h2>
             <p className="text-slate-600 mb-8 text-lg">
               Share your details and our team will reach out to you shortly.

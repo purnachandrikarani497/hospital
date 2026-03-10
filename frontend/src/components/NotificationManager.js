@@ -41,8 +41,7 @@ export default function NotificationManager({ actor = 'patient' }) {
   }, []);
 
   useEffect(() => {
-    const base = String(API.defaults.baseURL || "");
-    const origin = (base.startsWith("/") || !base) ? window.location.origin : base.replace(/\/(api)?$/, "");
+    const origin = window.location.origin;
     const w = window;
     const cleanup = [];
     const onReady = () => {

@@ -261,7 +261,7 @@ export default function Prescription() {
 
   return (
     <>
-    <div className={`screen-only min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative ${isEmbed ? 'pt-0' : 'pt-4'}`}>
+    <div className={`screen-only bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 relative ${isEmbed ? 'pt-0' : 'pt-4'}`}>
       {!isEmbed && <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>}
       <div className={`${isEmbed ? 'w-full' : 'max-w-4xl mx-auto px-4'}`}>
         {!isEmbed && (

@@ -158,11 +158,6 @@ router.delete('/doctors/:id', authenticate, authorize(['admin']), async (req, re
     const user = await User.findById(id);
     if (!user || user.role !== 'doctor') return res.status(404).json({ message: 'Doctor not found' });
 
-    const profile = await DoctorProfile.findOne({ user: id });
-    if (profile && profile.isOnline) {
-      return res.status(400).json({ message: 'Cannot delete doctor while they are online. Please ask them to go offline first.' });
-    }
-
     // Get tomorrow's date string
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -194,6 +189,75 @@ router.delete('/doctors/:id', authenticate, authorize(['admin']), async (req, re
     // Delete profile and user
     await DoctorProfile.deleteOne({ user: id });
     await User.deleteOne({ _id: id });
+
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ message: e.message });
+  }
+});
+
+// Edit doctor (admin)
+router.put('/doctors/:id', authenticate, authorize(['admin']), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const {
+      name,
+      email,
+      phone,
+      specializations,
+      clinic,
+      city,
+      address,
+      fees,
+      slotDurationMins,
+      experienceYears,
+      about,
+      photoBase64,
+      password
+    } = req.body;
+
+    const user = await User.findById(id);
+    if (!user || user.role !== 'doctor') return res.status(404).json({ message: 'Doctor not found' });
+
+    if (email && email.toLowerCase() !== user.email.toLowerCase()) {
+      const existing = await User.findOne({ email: email.toLowerCase() });
+      if (existing) return res.status(400).json({ message: 'Email already exists' });
+      user.email = email.toLowerCase();
+    }
+
+    if (name) user.name = name;
+    if (phone) user.phone = phone;
+    if (password && String(password).trim().length >= 6) {
+      const bcrypt = require('bcrypt');
+      user.passwordHash = await bcrypt.hash(String(password).trim(), 10);
+    }
+    await user.save();
+
+    const profile = await DoctorProfile.findOne({ user: id });
+    if (profile) {
+      if (specializations) {
+        const rawSpecs = Array.isArray(specializations)
+          ? specializations
+          : String(specializations || '')
+              .split(',')
+              .map(s => s.trim())
+              .filter(Boolean);
+        profile.specializations = [...new Set(rawSpecs)];
+      }
+      if (clinic || city || address) {
+        profile.clinic = {
+          name: clinic || profile.clinic.name || '',
+          address: address || profile.clinic.address || '',
+          city: city || profile.clinic.city || ''
+        };
+      }
+      if (fees !== undefined) profile.consultationFees = Number(fees);
+      if (slotDurationMins !== undefined) profile.slotDurationMins = Number(slotDurationMins);
+      if (experienceYears !== undefined) profile.experienceYears = Number(experienceYears);
+      if (about !== undefined) profile.about = about;
+      if (photoBase64 !== undefined) profile.photoBase64 = photoBase64;
+      await profile.save();
+    }
 
     res.json({ ok: true });
   } catch (e) {

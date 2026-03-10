@@ -150,11 +150,11 @@ app.set('io', io);
 const Appointment = require('./models/Appointment');
 const { createNotification } = require('./utils/notify');
 
+
 setInterval(async () => {
   try {
     const today = new Date().toISOString().slice(0, 10);
     const now = Date.now();
-    const ahead = new Date(now + 12 * 60 * 60 * 1000);
     const list = await Appointment.find({ date: today, status: { $in: ['PENDING','CONFIRMED'] } }).populate('patient','name').populate('doctor','name');
     for (const a of list) {
       const id = String(a._id || a.id || '');
@@ -198,6 +198,7 @@ setInterval(async () => {
         await createNotification(app, { userId: a.patient, title: 'Session Ended', message: 'The appointment slot has ended. Session marked as completed.', type: 'info', link: '/appointments', dedupeKey: `endedp_${id}` });
         // Emit socket to both so they close windows if open
         io.emit('meet:update', { apptId: id, actor: 'system', event: 'complete' });
+
       }
     }
   } catch (_) {}
@@ -295,4 +296,4 @@ app.get('/api/stats', async (req, res) => {
 
 
 const PORT = 5000;
-server.listen(PORT, () => console.log(`Server listening on ${PORT}`));
+server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

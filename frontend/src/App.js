@@ -5,7 +5,7 @@ import NotificationManager from "./components/NotificationManager";
 import API from "./api";
 import { useState, useEffect, Suspense, lazy } from "react";
 import SupportModal from "./components/SupportModal";
-// ggg
+
 
 const Login = lazy(() => import("./pages/Login"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
@@ -25,6 +25,7 @@ const AdminLogin = lazy(() => import("./pages/AdminLogin"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminAppointments = lazy(() => import("./pages/AdminAppointments"));
 const AdminAddDoctor = lazy(() => import("./pages/AdminAddDoctor"));
+const AdminEditDoctor = lazy(() => import("./pages/AdminEditDoctor"));
 const AdminSpecializations = lazy(() => import("./pages/AdminSpecializations"));
 const AdminSupport = lazy(() => import("./pages/AdminSupport"));
 const SearchDoctors = lazy(() => import("./pages/SearchDoctors"));
@@ -182,8 +183,8 @@ function Header({ onSupportOpen }) {
   }, [panelOpen]);
   if (hideHeader) return null;
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
+    <header className="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
+      <div className="max-w-full px-8 sm:px-12 relative">
         <div className="flex items-center h-16">
           {/* Left Section: Logo */}
           <div className="flex-shrink-0">
@@ -202,7 +203,7 @@ function Header({ onSupportOpen }) {
           </div>
 
           {/* Center Section: Desktop Navigation */}
-          <div className="flex-1 flex justify-center">
+          <div className="flex-1 flex justify-start ml-10">
             <nav className="hidden lg:flex items-center space-x-10">
               {(() => {
                 const p = location.pathname;
@@ -222,19 +223,25 @@ function Header({ onSupportOpen }) {
                       {p === "/" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                     </Link>
                     <Link to="/search" className={linkClass(p.startsWith("/search"))}>
-          <span className="relative z-10">Book Appointment</span>
+          <span className="relative z-10 whitespace-nowrap">Book Appointment</span>
           {p.startsWith("/search") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
         </Link>
                     {token ? (
                       <>
                         <Link to="/appointments" className={linkClass(isAppts)}>
-                          <span className="relative z-10">My Appointments</span>
+                          <span className="relative z-10 whitespace-nowrap">My Appointments</span>
                           {isAppts && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                         </Link>
                         <Link to="/appointments?view=prescriptions" className={linkClass(isPres)}>
                           <span className="relative z-10">Prescriptions</span>
                           {isPres && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                         </Link>
+                        <button
+                onClick={onSupportOpen}
+                className="px-4 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
+              >
+                SUPPORT
+              </button>
                       </>
                     ) : (
                       <>
@@ -259,16 +266,10 @@ function Header({ onSupportOpen }) {
           </div>
 
           {/* Right Section: Contact + User Actions */}
-          <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4">
+          <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 ml-auto">
             {/* Contact Info */}
-            <div className="hidden lg:flex items-center gap-4 border-r border-gray-200 pr-4">
-              <button
-                onClick={onSupportOpen}
-                className="px-4 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
-              >
-                SUPPORT
-              </button>
-              <div className="flex flex-col items-start text-sm font-bold text-gray-800">
+            <div className="hidden lg:flex items-center border-r border-gray-200 pr-4">
+              <div className="flex flex-col items-start text-sm font-bold text-gray-800 ml-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-blue-600">HELPLINE:</span>
                   <span>+91 98765 43210</span>
@@ -741,6 +742,7 @@ function App() {
           <Route path="/search" element={<SearchDoctors />} />
           <Route path="/doctor/:id" element={<DoctorDetails />} />
           <Route path="/admin/doctors/:id" element={<DoctorDetails />} />
+          <Route path="/admin/doctors/:id/edit" element={<RequireRole role="admin"><AdminEditDoctor /></RequireRole>} />
           <Route path="/book/:id" element={<Navigate to="/search" />} />
           <Route path="/pay/:id" element={<Payment />} />
           <Route path="/doctor/dashboard" element={<RequireRole role="doctor"><DoctorDashboard /></RequireRole>} />

@@ -4,7 +4,7 @@ const Support = require('../models/Support');
 const { authenticate } = require('../middlewares/auth');
 const User = require('../models/User');
 
-// Public route to submit support request
+// Public route to  support request
 router.post('/', async (req, res) => {
   try {
     const { name, phone } = req.body;

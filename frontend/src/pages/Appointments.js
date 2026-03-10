@@ -72,6 +72,17 @@ export default function Appointments() {
   const [presModalAppt, setPresModalAppt] = useState(null);
 
   useEffect(() => {
+    if (presModalAppt) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [presModalAppt]);
+
+  useEffect(() => {
     try {
       const q = new URLSearchParams(location.search);
       const shouldOpen = q.get('alertChat') === '1';
@@ -741,7 +752,7 @@ export default function Appointments() {
         )}
       </Helmet>
 
-      <div className="max-w-4xl w-full animate-fade-in">
+      <div className="w-full animate-fade-in">
         <div className="relative mb-12 text-center">
           <h1 className="inline-block px-10 py-4 text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
             {isPrescriptionsView ? 'My Prescriptions' : 'My Appointments'}
@@ -778,7 +789,7 @@ export default function Appointments() {
               )}
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <div className="divide-y divide-slate-100 custom-scrollbar">
               {(isPrescriptionsView ? presItems : list).map((a) => (
                 <div key={a._id} className="p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-slate-50/50 transition-colors duration-300">
                   <div className="flex items-center gap-6">
@@ -815,7 +826,7 @@ export default function Appointments() {
                         })()}
                       </div>
                       <div className="flex flex-col gap-1 text-sm font-medium">
-                        <div className="text-indigo-600">{profiles.get(String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</div>
+                        <div className="text-indigo-600">{profiles.get(isPrescriptionsView ? a.docId : String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</div>
                         <div className="text-slate-500 flex items-center gap-2">
                           <span>📅 {isPrescriptionsView ? a.date : a.date}</span>
                           <span className="text-slate-300">|</span>
@@ -829,41 +840,84 @@ export default function Appointments() {
                       <button onClick={() => setPresModalAppt(a)} className="px-6 py-2 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100 transition-colors border border-indigo-200">
                         Open Prescription
                       </button>
-                    ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase tracking-wider">Cancelled</span>
-                        <button onClick={() => nav(`/doctor/${String(a.doctor?._id || a.doctor)}`)} className="text-indigo-600 text-sm font-bold hover:underline">Rebook Appointment</button>
-                      </div>
-                    ) : String(a.status).toUpperCase() === 'COMPLETED' ? (
-                      <div className="flex flex-wrap gap-2">
-                        {a.prescriptionText && (
-                          <button onClick={() => setPresModalAppt(a)} className="px-4 py-2 rounded-xl bg-green-50 text-green-700 font-bold hover:bg-green-100 transition-colors border border-green-200">
-                            Prescription
+                    ) : (() => {
+                      const isCompleted = a.status === 'COMPLETED';
+                      const isCancelled = a.status === 'CANCELLED';
+                      const isExpired = !isCompleted && !isCancelled && apptEndTs(a) < Date.now();
+                      const id = String(a._id || a.id);
+                      const inJoinWindow = isJoinWindow(a);
+                      const hasJoined = localStorage.getItem(`joinedByPatient_${id}`) === '1';
+                      const hadEverJoined = localStorage.getItem(`everJoinedPatient_${id}`) === '1';
+                      const hasRated = Number(localStorage.getItem(`rate_${id}_stars`) || 0) > 0;
+
+                      if (isCompleted) {
+                        return (
+                          <div className="flex flex-wrap gap-2 items-center justify-end">
+                            <span className="px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-bold uppercase tracking-wider">Consultation Completed</span>
+                            {a.prescriptionText && (
+                              <button onClick={() => setPresModalAppt(a)} className="px-4 py-2 rounded-xl bg-green-50 text-green-700 font-bold hover:bg-green-100 transition-colors border border-green-200">
+                                View Prescription
+                              </button>
+                            )}
+                            {canFollowUp(a) && (
+                              <button onClick={() => nav(`/appointments/${a._id}/followup`)} className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors shadow-md">
+                                Follow-up
+                              </button>
+                            )}
+                            {hasRated ? (
+                               <span className="px-4 py-2 rounded-xl bg-slate-100 text-slate-500 font-bold border border-slate-200 cursor-default">Rated</span>
+                            ) : (
+                               <button onClick={() => setRateAppt(a)} className="px-4 py-2 rounded-xl bg-blue-50 text-blue-700 font-bold hover:bg-blue-100 transition-colors border border-blue-200">
+                                 Rate Doctor
+                               </button>
+                            )}
+                          </div>
+                        );
+                      }
+
+                      if (inJoinWindow) {
+                        if (hasJoined) {
+                            return <span className="px-4 py-2 rounded-xl bg-green-100 text-green-700 font-bold border border-green-200">Joined</span>;
+                        }
+                        
+                        if (hadEverJoined) {
+                            return (
+                                <button onClick={() => nav(`/appointments?joinMeet=${id}`)} className="px-6 py-2 rounded-xl bg-yellow-500 text-white font-bold hover:bg-yellow-600 transition-all shadow-lg hover:scale-105">
+                                    Rejoin
+                                </button>
+                            );
+                        }
+
+                        return (
+                          <button onClick={() => nav(`/appointments?joinMeet=${id}`)} className="px-6 py-2 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all shadow-lg hover:scale-105">
+                            Join
                           </button>
-                        )}
-                        {canFollowUp(a) && (
-                          <button onClick={() => nav(`/appointments/${a._id}/followup`)} className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors shadow-md">
-                            Follow-up
+                        );
+                      }
+                
+                      if (isExpired) {
+                        return (
+                          <div className="flex flex-col items-end gap-2">
+                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase tracking-wider">Time Expired</span>
+                            <button onClick={() => nav(`/doctor/${String(a.doctor?._id || a.doctor)}`)} className="text-indigo-600 text-sm font-bold hover:underline">Book Next Slot</button>
+                          </div>
+                        );
+                      }
+                
+                      return (
+                        <div className="flex gap-2">
+                          {canCancelAppt(a) && (
+                            <button onClick={() => cancel(a._id)} className="px-4 py-2 rounded-xl border-2 border-red-100 text-red-600 font-bold hover:bg-red-50 transition-colors">
+                              Cancel
+                            </button>
+                          )}
+                          <button onClick={() => setDetailsAppt(a)} className="px-4 py-2 rounded-xl border-2 border-slate-100 text-slate-700 font-bold hover:bg-slate-50 transition-colors">
+                            Details
                           </button>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="flex gap-2">
-                        {isJoinWindow(a) && (
-                          <button onClick={() => window.open(meetLinkFor(a), meetWindowName(a._id))} className="px-6 py-2 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all shadow-lg hover:scale-105">
-                            Join Meeting
-                          </button>
-                        )}
-                        {canCancelAppt(a) && (
-                          <button onClick={() => cancel(a._id)} className="px-4 py-2 rounded-xl border-2 border-red-100 text-red-600 font-bold hover:bg-red-50 transition-colors">
-                            Cancel
-                          </button>
-                        )}
-                        <button onClick={() => setDetailsAppt(a)} className="px-4 py-2 rounded-xl border-2 border-slate-100 text-slate-700 font-bold hover:bg-slate-50 transition-colors">
-                          Details
-                        </button>
-                      </div>
-                    )}
+                        </div>
+                      );
+                    })()
+                  }
                   </div>
                 </div>
               ))}

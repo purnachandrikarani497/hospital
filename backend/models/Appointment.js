@@ -35,6 +35,7 @@ const appointmentSchema = new mongoose.Schema({
 appointmentSchema.index({ date: -1, startTime: -1 });
 appointmentSchema.index({ doctor: 1, status: 1 });
 appointmentSchema.index({ patient: 1, status: 1 });
+appointmentSchema.index({ doctor: 1, ratingStars: 1 }); // Index for fast rating aggregation
 
 
 module.exports = mongoose.model('Appointment', appointmentSchema);

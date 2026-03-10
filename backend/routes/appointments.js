@@ -26,7 +26,12 @@ router.get("/slots/:doctorId", async (req, res) => {
         return res.status(404).json({ message: "Doctor profile not found" });
 
     const day = new Date(date).getDay(); // 0-6 (Sun-Sat)
-    let todaysAvailability = [{ day, from: "00:00", to: "24:00" }];
+    
+    // Use the doctor's actual weekly availability
+    const todaysAvailability = (profile.weeklyAvailability || []).filter(a => Number(a.day) === day);
+    
+    // If doctor has no availability set for this day, return empty array
+    if (!todaysAvailability.length) return res.json([]);
 
     const duration = profile.slotDurationMins || 15;
     const slotsMap = generateSlots(todaysAvailability, duration);

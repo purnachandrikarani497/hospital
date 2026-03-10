@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import API from "../api";
 import AdminHeader from "../components/AdminHeader";
 
-export default function AdminAddDoctor() {
+export default function AdminEditDoctor() {
+  const { id } = useParams();
   const nav = useNavigate();
   const [form, setForm] = useState({
     name: "",
@@ -23,10 +24,12 @@ export default function AdminAddDoctor() {
   const [showPass, setShowPass] = useState(false);
   const [errors, setErrors] = useState({});
   const [specialties, setSpecialties] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchSpecialties();
-  }, []);
+    fetchDoctor();
+  }, [id]);
 
   const fetchSpecialties = async () => {
     try {
@@ -37,50 +40,49 @@ export default function AdminAddDoctor() {
     }
   };
 
+  const fetchDoctor = async () => {
+    try {
+      const { data } = await API.get(`/doctors`, { params: { user: id } });
+      const doctor = data[0];
+      if (doctor) {
+        setForm({
+          name: doctor.user.name || "",
+          email: doctor.user.email || "",
+          phone: doctor.user.phone || "",
+          specializations: Array.isArray(doctor.specializations) ? doctor.specializations.join(", ") : doctor.specializations || "",
+          clinic: doctor.clinic?.name || "",
+          city: doctor.clinic?.city || "",
+          address: doctor.clinic?.address || "",
+          fees: doctor.consultationFees?.toString() || "",
+          slotDurationMins: doctor.slotDurationMins?.toString() || "15",
+          experienceYears: doctor.experienceYears?.toString() || "",
+          about: doctor.about || "",
+          password: "", // Don't fetch password
+          photoBase64: doctor.photoBase64 || "",
+        });
+      }
+    } catch (e) {
+      console.error("Failed to fetch doctor details", e);
+      alert("Failed to load doctor details");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const onChange = (e) => {
     const { name, value } = e.target;
     let processedValue = value;
 
     if (name === "email") {
-      if (value.includes(" ")) {
-        alert("Spaces are not allowed in the email field! All spaces will be removed.");
-      }
       processedValue = value.replace(/\s/g, "").toLowerCase();
-    } else if (name === "name") {
-      if (processedValue.startsWith(" ")) {
-        alert("Leading spaces are not allowed in Full Name!");
-        processedValue = processedValue.trimStart();
-      }
-      const nameRegex = /^[a-zA-Z\s_]*$/;
-      if (!nameRegex.test(processedValue)) {
-        alert("Full Name can only contain letters, spaces, and underscores!");
+    } else if (name === "name" || name === "clinic" || name === "city") {
+      if (processedValue.startsWith(" ")) processedValue = processedValue.trimStart();
+      const regex = /^[a-zA-Z\s_]*$/;
+      if (!regex.test(processedValue)) {
         processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
       }
-    } else if (name === "clinic") {
-      if (processedValue.startsWith(" ")) {
-        alert("Leading spaces are not allowed in Clinic Name!");
-        processedValue = processedValue.trimStart();
-      }
-      const clinicRegex = /^[a-zA-Z\s_]*$/;
-      if (!clinicRegex.test(processedValue)) {
-        alert("Clinic Name can only contain letters, spaces, and underscores!");
-        processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
-      }
-    } else if (name === "city") {
-      if (processedValue.startsWith(" ")) {
-        alert("Leading spaces are not allowed in City!");
-        processedValue = processedValue.trimStart();
-      }
-      const cityRegex = /^[a-zA-Z\s_]*$/;
-      if (!cityRegex.test(processedValue)) {
-        alert("City can only contain letters, spaces, and underscores!");
-        processedValue = processedValue.replace(/[^a-zA-Z\s_]/g, "");
-      }
-    } else {
-      if (processedValue.startsWith(" ")) {
-        alert("Spaces are not allowed at the beginning!");
-        processedValue = processedValue.trimStart();
-      }
+    } else if (name !== "address" && name !== "about") {
+      if (processedValue.startsWith(" ")) processedValue = processedValue.trimStart();
     }
 
     if (name === "phone") processedValue = String(processedValue).replace(/\D/g, "").slice(0, 10);
@@ -88,20 +90,12 @@ export default function AdminAddDoctor() {
     if (name === "experienceYears") processedValue = String(processedValue).replace(/\D/g, "").slice(0, 2);
     if (name === "slotDurationMins") processedValue = String(processedValue).replace(/\D/g, "");
     
-    if (name === "name" && processedValue.length > 50) return; 
-    if (name === "email" && processedValue.length > 100) return;
-    if (name === "specializations" && processedValue.length > 100) return;
-    if (name === "clinic" && processedValue.length > 100) return;
-    if (name === "city" && processedValue.length > 50) return;
-    if (name === "address" && processedValue.length > 150) return;
-    if (name === "about" && processedValue.length > 350) return;
     setForm((f) => ({ ...f, [name]: processedValue }));
   };
 
   const onBlur = (e) => {
     const { name, value } = e.target;
     if (value.endsWith(" ")) {
-      alert(`Spaces are not allowed at the end of ${name === 'name' ? 'Full Name' : name}!`);
       setForm((f) => ({ ...f, [name]: value.trim() }));
     }
   };
@@ -109,45 +103,26 @@ export default function AdminAddDoctor() {
   const submit = async (e) => {
     e.preventDefault();
     const errs = {};
-
-    // Final Trim for all fields to remove trailing spaces
     const trimmedForm = {};
     Object.keys(form).forEach(key => {
       trimmedForm[key] = typeof form[key] === 'string' ? form[key].trim() : form[key];
     });
 
-    const trimmedName = trimmedForm.name;
-    const trimmedEmail = trimmedForm.email;
-
-    // Mandatory field check
-    if (!trimmedName) { alert("Please enter Full Name"); return; }
-    if (trimmedName.length < 3) { alert("Name is too short (min 3 characters)"); return; }
-    if (trimmedName.length > 50) { alert("Name is too long (max 50 characters)"); return; }
-
-    if (!trimmedEmail) { alert("Please enter Email"); return; }
-    
-    // Strict Email validation: no capital letters, no spaces, only @gmail.com or @hms.com
+    if (!trimmedForm.name) { alert("Please enter Full Name"); return; }
+    if (!trimmedForm.email) { alert("Please enter Email"); return; }
     const emailRegex = /^[a-z0-9._%+-]+@(gmail\.com|hms\.com)$/;
-    if (!emailRegex.test(trimmedEmail)) {
-      alert("Please enter a valid lowercase email ending with @gmail.com or @hms.com (e.g., doctor@gmail.com)");
+    if (!emailRegex.test(trimmedForm.email)) {
+      alert("Please enter a valid lowercase email ending with @gmail.com or @hms.com");
       return;
     }
 
     if (!trimmedForm.phone) { alert("Please enter Phone Number"); return; }
     if (!trimmedForm.specializations) { alert("Please enter Specializations"); return; }
 
-    // Check if entered specializations exist in the predefined list and are unique
     const enteredSpecs = trimmedForm.specializations.split(",").map(s => s.trim()).filter(s => s !== "");
     const invalidSpecs = enteredSpecs.filter(s => !specialties.includes(s));
-    
     if (invalidSpecs.length > 0) {
       alert(`Specialization is not in the list: ${invalidSpecs.join(", ")}`);
-      return;
-    }
-
-    const uniqueSpecs = [...new Set(enteredSpecs)];
-    if (uniqueSpecs.length !== enteredSpecs.length) {
-      alert("Duplicate specializations are not allowed.");
       return;
     }
 
@@ -156,47 +131,28 @@ export default function AdminAddDoctor() {
     if (!trimmedForm.address) { alert("Please enter Clinic Address"); return; }
     if (!trimmedForm.fees) { alert("Please enter Consultation Fees"); return; }
     if (!trimmedForm.experienceYears) { alert("Please enter Experience (years)"); return; }
-    if (!trimmedForm.password) { alert("Please enter Password"); return; }
 
-    // Regex and format validation
     if (!/^[6-9]\d{9}$/.test(String(trimmedForm.phone))) errs.phone = "Phone must start 6-9 and be 10 digits";
-    if (trimmedForm.fees && !/^\d+$/.test(String(trimmedForm.fees))) errs.fees = "Fees must be digits";
-    if (trimmedForm.slotDurationMins && !/^\d+$/.test(String(trimmedForm.slotDurationMins))) errs.slot = "Slot must be digits";
-    if (trimmedForm.experienceYears && !/^\d+$/.test(String(trimmedForm.experienceYears))) errs.exp = "Experience must be digits";
-    const passOk = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,12}$/.test(String(trimmedForm.password));
-    if (!passOk) errs.password = "Password 6-12 chars, letters & numbers";
+    if (trimmedForm.password && !/^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,12}$/.test(String(trimmedForm.password))) {
+      errs.password = "Password 6-12 chars, letters & numbers";
+    }
 
     setErrors(errs);
     if (Object.keys(errs).length) {
-      const firstError = Object.values(errs)[0];
-      alert(firstError);
+      alert(Object.values(errs)[0]);
       return;
     }
 
     try {
-      const payload = {
-        name: trimmedName,
-        email: trimmedEmail,
-        phone: trimmedForm.phone,
-        specializations: trimmedForm.specializations,
-        clinic: trimmedForm.clinic,
-        city: trimmedForm.city,
-        address: trimmedForm.address,
-        fees: trimmedForm.fees,
-        slotDurationMins: trimmedForm.slotDurationMins,
-        experienceYears: trimmedForm.experienceYears ? Number(trimmedForm.experienceYears) : undefined,
-        about: trimmedForm.about,
-        password: trimmedForm.password,
-        photoBase64: trimmedForm.photoBase64,
-      };
-      await API.post("/admin/doctors", payload);
-      alert("Doctor created successfully.");
-      setForm({ name: "", email: "", phone: "", specializations: "", clinic: "", city: "", address: "", fees: "", slotDurationMins: "15", experienceYears: "", about: "", password: "", photoBase64: "" });
-      nav("/admin/doctors");
+      await API.put(`/admin/doctors/${id}`, trimmedForm);
+      alert("Doctor updated successfully.");
+      nav(`/admin/doctors/${id}`);
     } catch (err) {
-      alert(err.response?.data?.message || err.message || "Failed to create doctor");
+      alert(err.response?.data?.message || err.message || "Failed to update doctor");
     }
   };
+
+  if (loading) return <div className="p-8 text-center">Loading...</div>;
 
   return (
     <div className="min-h-screen">
@@ -216,7 +172,7 @@ export default function AdminAddDoctor() {
               </svg>
             </button>
             <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
-              Add Doctor
+              Edit Doctor
               <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
             </h2>
           </div>
@@ -239,14 +195,11 @@ export default function AdminAddDoctor() {
                 onChange={(e) => {
                   const val = e.target.value;
                   if (!val) return;
-
-                  // Check if already in form specializations for existing selection
                   const currentSpecs = form.specializations ? form.specializations.split(",").map(s => s.trim()) : [];
                   if (currentSpecs.includes(val)) {
                     alert("This specialization is already added to the doctor.");
                     return;
                   }
-
                   setForm((f) => ({
                     ...f,
                     specializations: f.specializations ? `${f.specializations}, ${val}` : val,
@@ -259,17 +212,6 @@ export default function AdminAddDoctor() {
                   <option key={s} value={s}>{s}</option>
                 ))}
               </select>
-              <div className="flex justify-between items-center mb-2">
-                <div className="text-xs text-slate-500 italic">
-                  * Select specializations from the list above.
-                </div>
-                <Link to="/admin/specializations" className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold flex items-center gap-1">
-                  <span>Manage List</span>
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                  </svg>
-                </Link>
-              </div>
               <input name="specializations" maxLength={100} value={form.specializations} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="e.g., Cardiology, Dermatology" />
 
               <div className="grid sm:grid-cols-2 gap-3">
@@ -290,63 +232,58 @@ export default function AdminAddDoctor() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Consultation Fees <span className="text-red-500">*</span></label>
                   <input name="fees" inputMode="numeric" maxLength={4} value={form.fees} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="e.g., 500" />
-                  {errors.fees ? (<div className="text-red-600 text-xs mb-3">{errors.fees}</div>) : (<div className="mb-3" />)}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Slot Duration (mins) <span className="text-red-500">*</span></label>
-                  <select
-                    name="slotDurationMins"
-                    value={form.slotDurationMins}
-                    onChange={onChange}
-                    onBlur={onBlur}
-                    className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1"
-                  >
+                  <select name="slotDurationMins" value={form.slotDurationMins} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1">
                     <option value="15">15</option>
                     <option value="30">30</option>
                     <option value="60">60</option>
                   </select>
-                  {errors.slot ? (<div className="text-red-600 text-xs mb-3">{errors.slot}</div>) : (<div className="mb-3" />)}
                 </div>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Experience (years) <span className="text-red-500">*</span></label>
-                  <input name="experienceYears" inputMode="numeric" maxLength={2} value={form.experienceYears} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-1" placeholder="e.g., 5" />
-                  {errors.exp ? (<div className="text-red-600 text-xs mb-3">{errors.exp}</div>) : (<div className="mb-3" />)}
+                  <input name="experienceYears" inputMode="numeric" maxLength={2} value={form.experienceYears} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="e.g., 5" />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Password <span className="text-red-500">*</span></label>
-                  <div className="relative mb-1">
-                    <input name="password" type={showPass ? "text" : "password"} value={form.password} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 pr-10" placeholder="Set doctor password" />
-                    <button type="button" onClick={() => setShowPass((v) => !v)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-600">{showPass ? "🙈" : "👁"}</button>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Password (Leave blank to keep same)</label>
+                  <div className="relative">
+                    <input type={showPass ? "text" : "password"} name="password" value={form.password} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300" placeholder="••••••••" />
+                    <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400">
+                      {showPass ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                      ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.976 9.976 0 012.146-3.581M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" /></svg>
+                      )}
+                    </button>
                   </div>
-                  {errors.password ? (<div className="text-red-600 text-xs mb-3">{errors.password}</div>) : (<div className="mb-3" />)}
                 </div>
               </div>
 
-              <label className="block text-sm font-medium text-slate-700 mb-1">About</label>
-              <textarea name="about" maxLength={350} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Write about yourself..." rows={3} />
+              <label className="block text-sm font-medium text-slate-700 mb-1 mt-3">About</label>
+              <textarea name="about" maxLength={350} value={form.about} onChange={onChange} onBlur={onBlur} className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 mb-3" placeholder="Tell us about the doctor..." rows={4} />
 
-              <label className="block text-sm font-medium text-slate-700 mb-1">Upload Image</label>
-              <input type="file" accept="image/*" className="w-full p-3 border-2 border-slate-200 rounded-xl bg-white transition-all duration-300 mb-3" onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = () => {
-                  setForm((f) => ({ ...f, photoBase64: String(reader.result || "") }));
-                };
-                reader.readAsDataURL(file);
-              }} />
-              {form.photoBase64 && (
-                <div className="mb-3">
-                  <img src={form.photoBase64} alt="Selected" className="w-full h-40 object-cover rounded-xl border-2 border-slate-200" />
-                </div>
-              )}
+              <label className="block text-sm font-medium text-slate-700 mb-1">Photo (Base64)</label>
+              <input 
+                type="file" 
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setForm((f) => ({ ...f, photoBase64: reader.result }));
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="w-full p-2 text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 mb-6"
+              />
 
-              <div className="flex items-center justify-end">
-                <button className="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Create Doctor</button>
-              </div>
+              <button type="submit" className="w-full py-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02]">
+                Update Doctor Profile
+              </button>
             </form>
           </div>
         </div>
