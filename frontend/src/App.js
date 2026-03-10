@@ -740,9 +740,6 @@ function App() {
           <Route path="/doctor/login" element={<Navigate to="/login" />} />
           <Route path="/register" element={<Register />} />
           <Route path="/search" element={<SearchDoctors />} />
-          <Route path="/doctor/:id" element={<DoctorDetails />} />
-          <Route path="/admin/doctors/:id" element={<DoctorDetails />} />
-          <Route path="/admin/doctors/:id/edit" element={<RequireRole role="admin"><AdminEditDoctor /></RequireRole>} />
           <Route path="/book/:id" element={<Navigate to="/search" />} />
           <Route path="/pay/:id" element={<Payment />} />
           <Route path="/doctor/dashboard" element={<RequireRole role="doctor"><DoctorDashboard /></RequireRole>} />
@@ -750,6 +747,9 @@ function App() {
           <Route path="/doctor/appointments/:id/documents" element={<RequireRole role="doctor"><DoctorAppointmentDocuments /></RequireRole>} />
           <Route path="/doctor/appointments/:id/followup" element={<RequireRole role="doctor"><FollowUpDetails actor="doctor" backTo="/doctor/appointments" /></RequireRole>} />
           <Route path="/doctor/profile" element={<RequireRole role="doctor"><DoctorProfile /></RequireRole>} />
+          <Route path="/doctor/:id" element={<DoctorDetails />} />
+          <Route path="/admin/doctors/:id" element={<DoctorDetails />} />
+          <Route path="/admin/doctors/:id/edit" element={<RequireRole role="admin"><AdminEditDoctor /></RequireRole>} />
           <Route path="/prescription/:id" element={<Prescription />} />
           <Route path="/admin/doctors/pending" element={<RequireRole role="admin"><AdminPendingDoctors /></RequireRole>} />
           <Route path="/admin" element={<Navigate to="/login" />} />

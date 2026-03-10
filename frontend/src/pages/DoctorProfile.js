@@ -5,6 +5,7 @@ import Logo from "../components/Logo";
 
 export default function DoctorProfile() {
   const nav = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const linkClass = (active) =>
     active
@@ -59,7 +60,7 @@ export default function DoctorProfile() {
   useEffect(() => {
     const load = async () => {
       const id = localStorage.getItem("userId");
-      if (!id) return;
+      if (!id) { setLoading(false); return; }
       
       try {
         const { data } = await API.get("/doctors", { params: { user: id } });
@@ -71,7 +72,9 @@ export default function DoctorProfile() {
         else if (typeof p?.isOnline === 'boolean') setOnline(!!p.isOnline);
         if (busyById !== null) setBusy(busyById === "1");
         else if (typeof p?.isBusy === 'boolean') setBusy(!!p.isBusy);
-      } catch (e) {}
+      } catch (e) {} finally {
+        setLoading(false);
+      }
       
     };
     load();
@@ -103,6 +106,7 @@ export default function DoctorProfile() {
     const id = localStorage.getItem("userId");
     if (id) localStorage.setItem(`doctorOnlineById_${id}`, online ? "1" : "0");
   }, [online]);
+
   useEffect(() => {
     const id = localStorage.getItem("userId");
     if (id) localStorage.setItem(`doctorBusyById_${id}`, busy ? "1" : "0");
@@ -141,6 +145,19 @@ export default function DoctorProfile() {
     const t = setInterval(refreshStatus, 8000);
     return () => { window.removeEventListener('focus', onFocus); document.removeEventListener('visibilitychange', onVis); clearInterval(t); };
   }, []);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-blue-50/50"><div className="text-xl font-semibold text-blue-600 animate-pulse">Loading profile...</div></div>;
+
+  if (!profile && !editing) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50/50 px-4 text-center">
+      <div className="text-6xl mb-4">👨‍⚕️</div>
+      <h2 className="text-2xl font-bold text-slate-900 mb-2">No Profile Found</h2>
+      <p className="text-slate-600 mb-6">You haven't completed your doctor profile yet.</p>
+      <button onClick={() => { setEditing(true); setForm({ ...form }); }} className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all">
+        Create Profile Now
+      </button>
+    </div>
+  );
 
   const setStatus = async (status) => {
     const uid = localStorage.getItem("userId") || "";

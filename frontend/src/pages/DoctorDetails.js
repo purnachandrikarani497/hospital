@@ -3,10 +3,12 @@ import { useParams, useNavigate, Link, useLocation } from "react-router-dom";
 import API from "../api";
 import { Helmet } from "react-helmet-async";
 import AdminHeader from "../components/AdminHeader";
+import Logo from "../components/Logo";
 
 
 export default function DoctorDetails() {
   const { id } = useParams();
+  const [loading, setLoading] = useState(true);
   const [doctor, setDoctor] = useState(null);
   const [related, setRelated] = useState([]);
   const [type, setType] = useState("offline");
@@ -35,7 +37,16 @@ export default function DoctorDetails() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    API.get(`/doctors`, { params: { user: id } }).then((res) => setDoctor(res.data[0]));
+    setLoading(true);
+    API.get(`/doctors`, { params: { user: id } })
+      .then((res) => {
+        setDoctor(res.data[0]);
+        setLoading(false);
+      })
+      .catch(() => {
+        setDoctor(null);
+        setLoading(false);
+      });
   }, [id]);
 
   useEffect(() => {
@@ -172,7 +183,17 @@ export default function DoctorDetails() {
     })();
   }, [doctor, selectedDate]);
 
-  if (!doctor) return <div className="max-w-7xl mx-auto px-4 mt-8">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-blue-50/50"><div className="text-xl font-semibold text-blue-600 animate-pulse">Loading profile...</div></div>;
+  if (!doctor) return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50/50 px-4 text-center">
+      <div className="text-6xl mb-4">🩺</div>
+      <h2 className="text-2xl font-bold text-slate-900 mb-2">Doctor Not Found</h2>
+      <p className="text-slate-600 mb-6">The profile you are looking for might have been moved or doesn't exist.</p>
+      <Link to="/" className="px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-all">
+        Go Back Home
+      </Link>
+    </div>
+  );
 
   return (
     <>
@@ -366,13 +387,13 @@ export default function DoctorDetails() {
               const now = new Date();
               const nowMin = now.getHours() * 60 + now.getMinutes();
               const availKeys = new Set((slots || []).map((x) => `${x.start}-${x.end}`));
-              const base = selectedDate === todayISO
-                ? allSlots.filter((s) => {
-                    const [hh, mm] = String(s.start || "00:00").split(":").map((x) => Number(x));
+              const base = (selectedDate === todayISO)
+                ? (allSlots || []).filter((s) => {
+                    const [hh, mm] = String(s?.start || "00:00").split(":").map((x) => Number(x));
                     return hh * 60 + mm >= nowMin;
                   })
-                : allSlots;
-              return base.map((s) => {
+                : (allSlots || []);
+              return (base || []).map((s) => {
                 const key = `${s.start}-${s.end}`;
                 const sel = selectedSlot && selectedSlot.start === s.start && selectedSlot.end === s.end;
                 const isMine = (myBooked || []).includes(key);
