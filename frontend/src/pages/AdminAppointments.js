@@ -27,14 +27,11 @@ export default function AdminAppointments() {
     load();
   }, []);
 
-  const rank = (s) => {
-    const x = String(s || "").toUpperCase();
-    if (x === "PENDING") return 0;
-    if (x === "CONFIRMED" || x === "COMPLETED") return 1;
-    if (x === "CANCELLED" || x === "CANCELED") return 2;
-    return 3;
-  };
-  const ordered = list.slice().sort((a, b) => rank(a.status) - rank(b.status));
+  const ordered = list.slice().sort((a, b) => {
+      const d1 = new Date(`${a.date}T${a.startTime || '00:00'}:00`);
+      const d2 = new Date(`${b.date}T${b.startTime || '00:00'}:00`);
+      return d2 - d1;
+    });
   const rows = ordered.length
     ? ordered.map((a, i) => (
         <tr key={a._id} className="border-t hover:bg-blue-50/40 transition-all duration-200 group">
@@ -60,7 +57,9 @@ export default function AdminAppointments() {
             return String(age);
           })()}</td>
           <td className="px-6 py-4 font-medium text-slate-700">{a.date} {a.startTime}</td>
-          <td className="px-6 py-4 font-medium text-slate-700">{a.doctor?.name || "--"}</td>
+          <td className="px-6 py-4 font-medium text-slate-700">
+              {a.doctor && typeof a.doctor === 'object' ? a.doctor.name : (a.doctorName || "--")}
+            </td>
           <td className="px-6 py-4 font-medium text-slate-700">₹{a.fee || 0}</td>
           <td className="px-6 py-4 text-center">
             <span className={`badge ${(() => {

@@ -184,9 +184,9 @@ function Header({ onSupportOpen }) {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
-        <div className="flex items-center justify-between h-16">
-          {/* Left Section: Logo + Nav */}
-          <div className="flex items-center gap-10">
+        <div className="flex items-center h-16">
+          {/* Left Section: Logo */}
+          <div className="flex-shrink-0">
             <Link to="/" aria-label="Go to HospoZen Home" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
                 <div className="text-white">
@@ -199,8 +199,10 @@ function Header({ onSupportOpen }) {
                 </span>
               </div>
             </Link>
+          </div>
 
-            {/* Enhanced Desktop Navigation */}
+          {/* Center Section: Desktop Navigation */}
+          <div className="flex-1 flex justify-center">
             <nav className="hidden lg:flex items-center space-x-10">
               {(() => {
                 const p = location.pathname;
@@ -210,8 +212,8 @@ function Header({ onSupportOpen }) {
 
                 const linkClass = (active) =>
                   active
-                    ? "relative px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
-                    : "relative px-4 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-xl hover:bg-blue-50/50 transition-all duration-300 hover:scale-105";
+                    ? "relative inline-flex items-center justify-center px-4 py-2 text-blue-700 font-bold bg-blue-50 rounded-xl border-2 border-blue-200 shadow-sm"
+                    : "relative inline-flex items-center justify-center px-4 py-2 text-gray-600 hover:text-blue-600 font-medium rounded-xl hover:bg-blue-50/50 transition-all duration-300 hover:scale-105";
 
                 return (
                   <>
@@ -220,9 +222,9 @@ function Header({ onSupportOpen }) {
                       {p === "/" && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
                     </Link>
                     <Link to="/search" className={linkClass(p.startsWith("/search"))}>
-                      <span className="relative z-10">Book an appoinment</span>
-                      {p.startsWith("/search") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
-                    </Link>
+          <span className="relative z-10">Book Appointment</span>
+          {p.startsWith("/search") && <div className="absolute inset-0 bg-gradient-to-r from-blue-400/20 to-purple-400/20 rounded-xl"></div>}
+        </Link>
                     {token ? (
                       <>
                         <Link to="/appointments" className={linkClass(isAppts)}>
@@ -257,9 +259,15 @@ function Header({ onSupportOpen }) {
           </div>
 
           {/* Right Section: Contact + User Actions */}
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4">
             {/* Contact Info */}
             <div className="hidden lg:flex items-center gap-4 border-r border-gray-200 pr-4">
+              <button
+                onClick={onSupportOpen}
+                className="px-4 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
+              >
+                SUPPORT
+              </button>
               <div className="flex flex-col items-start text-sm font-bold text-gray-800">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-blue-600">HELPLINE:</span>
@@ -270,12 +278,6 @@ function Header({ onSupportOpen }) {
                   <span>hospozen@gmail.com</span>
                 </div>
               </div>
-              <button
-                onClick={onSupportOpen}
-                className="px-4 py-1.5 bg-indigo-100 text-indigo-700 text-xs font-bold rounded-full border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-all duration-300 shadow-sm"
-              >
-                SUPPORT
-              </button>
             </div>
 
             {/* Mobile Menu Button */}
@@ -581,7 +583,7 @@ function Header({ onSupportOpen }) {
         {/* Enhanced Mobile Menu */}
         {mobileOpen && (
           <div className="lg:hidden bg-white/98 backdrop-blur-md border-t border-blue-200/50 py-6">
-            <nav className="flex flex-col space-y-4 px-6">
+            <nav className="flex flex-col items-center space-y-4 px-6">
               {(() => {
                 const p = location.pathname;
                 const s = location.search;
@@ -590,7 +592,7 @@ function Header({ onSupportOpen }) {
 
                 const items = [
                   { path: '/', label: 'Home', active: p === '/' },
-                  { path: '/search', label: 'Book an appoinment', active: p.startsWith('/search') }
+                  { path: '/search', label: 'Book Appointment', active: p.startsWith('/search') }
                 ];
 
                 if (token) {
@@ -605,7 +607,7 @@ function Header({ onSupportOpen }) {
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`px-6 py-3 rounded-xl font-medium transition-all duration-300 ${
+                    className={`w-full max-w-xs px-6 py-3 rounded-xl font-medium text-center transition-all duration-300 ${
                       item.active
                         ? 'bg-gradient-to-r from-blue-50 to-purple-50 text-blue-700 border-2 border-blue-200 shadow-sm'
                         : 'text-gray-700 hover:bg-blue-50/50 hover:text-blue-600 hover:scale-105'
@@ -667,10 +669,10 @@ function App() {
     const origin = window.location.origin || '';
     const url = origin + path + (location.search || '');
     const metaByPath = () => {
-      if (path === '/') return { title: 'HospoZen | Book Doctors Online', desc: 'Find verified doctors and book appointments online with HospoZen.', keys: 'book doctors online,Book an appoinment, healthcare appointments, telemedicine' };
+      if (path === '/') return { title: 'HospoZen | Book Doctors Online', desc: 'Find verified doctors and book appointments online with HospoZen.', keys: 'book doctors online,Book an appointment, healthcare appointments, telemedicine' };
       if (path.startsWith('/about')) return { title: 'About HospoZen | Healthcare Platform', desc: 'Learn about HospoZen and our mission to modernize healthcare.', keys: 'about hospozen, healthcare platform, company info' };
       if (path.startsWith('/contact')) return { title: 'Contact HospoZen | Support', desc: 'Get support and contact the HospoZen team.', keys: 'contact hospozen, support, help' };
-      if (path.startsWith('/search')) return { title: 'Book an appoinment by Specialization | HospoZen', desc: 'Search and filter doctors by specialization, experience, and ratings.', keys: 'Book an appoinment, specializations, doctor search, ratings' };
+      if (path.startsWith('/search')) return { title: 'Book an appointment by Specialization | HospoZen', desc: 'Search and filter doctors by specialization, experience, and ratings.', keys: 'Book an appointment, specializations, doctor search, ratings' };
       if (path.startsWith('/doctor/')) return { title: 'Doctor Profile | HospoZen', desc: 'View doctor details, specialization, experience, and book an appointment.', keys: 'doctor profile, book appointment, specialization' };
       if (path.startsWith('/appointments')) {
         const isPres = s.includes('view=prescriptions');

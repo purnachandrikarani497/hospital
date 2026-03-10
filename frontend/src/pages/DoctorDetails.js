@@ -313,7 +313,7 @@ export default function DoctorDetails() {
           </div>
         </header>
       ) : null}
-      <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 ${isAdminRoute ? 'pt-16' : 'pt-4'} relative`}>
+      <div className={`min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 ${isAdminRoute ? 'pt-16' : 'pt-24'} relative`}>
         <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
         <div className="max-w-7xl mx-auto px-4 animate-fade-in">
         <div className="relative mb-10 text-center">
@@ -578,7 +578,7 @@ export default function DoctorDetails() {
             }}
             className="inline-flex items-center justify-center w-full md:w-auto py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
           >
-          {isLoggedIn ? "Book an appointment" : "Login to book"}
+          {isLoggedIn ? "Book Appointment" : "Login to book"}
           </button>
         </div>
       </div>

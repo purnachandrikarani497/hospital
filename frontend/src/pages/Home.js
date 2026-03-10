@@ -223,9 +223,13 @@ export default function Home() {
                 Empowering lives through revolutionary healthcare solutions that blend cutting-edge technology with heartfelt compassion.
               </p>
 
-              <div className="flex items-center gap-4 animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}>
-                <Link to="/search" className="btn-gradient animate-bounce-in shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
-Book an appoinment        </Link>
+              <div className="flex flex-wrap gap-4 animate-slide-in-up" style={{ animationDelay: '0.4s', animationFillMode: 'forwards' }}>
+                <Link to="/search" className="bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800 text-white px-8 py-4 rounded-2xl font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 transform active:scale-95 flex items-center gap-2 group">
+                  Book Appointment
+                  <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                </Link>
                 <Link to="/contact" className="btn-gradient animate-bounce-in shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
                   Contact Us
                 </Link>
@@ -290,29 +294,32 @@ Book an appoinment        </Link>
             <p className="text-gray-600 mt-4 text-lg animate-fade-in" style={{ animationDelay: '0.1s', animationFillMode: 'forwards' }}>Simply browse through our extensive list of trusted doctors.</p>
           </div>
           {error && <div className="text-center text-sm text-red-600 mt-3 bg-red-50 py-2 px-4 rounded-lg border border-red-200">{error}</div>}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
             {(() => {
-              const sorted = (list || []).slice().sort((a, b) => {
-                const expB = Number(b.experienceYears ?? b.experience ?? 0) || 0;
-                const expA = Number(a.experienceYears ?? a.experience ?? 0) || 0;
-                if (expB !== expA) return expB - expA;
-                const rateB = Number(b.averageRating || 0) || 0;
-                const rateA = Number(a.averageRating || 0) || 0;
-                if (rateB !== rateA) return rateB - rateA;
-                const tb = new Date(b.createdAt || 0).getTime();
-                const ta = new Date(a.createdAt || 0).getTime();
-                if (tb !== ta) return tb - ta;
-                const nb = String(b.user?.name || "");
-                const na = String(a.user?.name || "");
-                return nb.localeCompare(na);
-              });
+              const sorted = (list || [])
+                .filter(d => Number(d.averageRating || 0) > 0)
+                .slice()
+                .sort((a, b) => {
+                  const expB = Number(b.experienceYears ?? b.experience ?? 0) || 0;
+                  const expA = Number(a.experienceYears ?? a.experience ?? 0) || 0;
+                  if (expB !== expA) return expB - expA;
+                  const rateB = Number(b.averageRating || 0) || 0;
+                  const rateA = Number(a.averageRating || 0) || 0;
+                  if (rateB !== rateA) return rateB - rateA;
+                  const tb = new Date(b.createdAt || 0).getTime();
+                  const ta = new Date(a.createdAt || 0).getTime();
+                  if (tb !== ta) return tb - ta;
+                  const nb = String(b.user?.name || "");
+                  const na = String(a.user?.name || "");
+                  return nb.localeCompare(na);
+                });
               return sorted.map((d, i) => (
-                <div key={d._id} className="glass-card overflow-hidden card-hover animate-fade-in" style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'forwards' }}>
-                  <div className="relative">
+                <div key={d._id} className="glass-card overflow-hidden card-hover animate-fade-in flex flex-col h-full" style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'forwards' }}>
+                  <div className="relative h-48 flex-shrink-0">
                     {String(d.photoBase64 || "").startsWith("data:image") ? (
-                      <img src={d.photoBase64} alt={`Dr. ${d.user?.name || ''}`} loading="lazy" decoding="async" width="640" height="320" className="w-full h-48 object-cover" />
+                      <img src={d.photoBase64} alt={`Dr. ${d.user?.name || ''}`} loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
+                      <div className="w-full h-full bg-gray-100 flex items-center justify-center">
                         <div className="text-4xl text-gray-400">👨‍⚕️</div>
                       </div>
                     )}
@@ -326,19 +333,23 @@ Book an appoinment        </Link>
                       })()}
                     </div>
                   </div>
-                  <div className="p-6">
-                    <h3 className="text-lg font-semibold text-gray-900">{`Dr. ${d.user?.name || ''}`}</h3>
-                    <p className="text-gray-600 text-sm mt-1">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
-                    {d.experienceYears ? (<div className="text-xs text-gray-700 mt-1">{`${d.experienceYears} Years`}</div>) : null}
-                    {(() => { const avg = d.averageRating || 0; if (!avg) return null; return (
-                      <div className="mt-2 flex items-center gap-1 text-amber-500">
-                        {[1,2,3,4,5].map((n) => (
-                          <svg key={n} className={`w-4 h-4 ${avg>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                        ))}
+                  <div className="p-6 flex flex-col flex-grow">
+                    <div className="flex-grow">
+                      <h3 className="text-lg font-bold text-gray-900 line-clamp-1">{`Dr. ${d.user?.name || ''}`}</h3>
+                      <p className="text-indigo-600 text-sm font-medium mt-1 line-clamp-2 min-h-[2.5rem]">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        {d.experienceYears ? (<div className="text-xs font-semibold text-gray-600">{`${d.experienceYears} Years Exp.`}</div>) : <div className="text-xs"></div>}
+                        {(() => { const avg = d.averageRating || 0; if (!avg) return null; return (
+                          <div className="flex items-center gap-1 text-amber-500">
+                            {[1,2,3,4,5].map((n) => (
+                              <svg key={n} className={`w-3.5 h-3.5 ${avg>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                            ))}
+                          </div>
+                        ); })()}
                       </div>
-                    ); })()}
-                    <div className="mt-4">
-                      <Link to={`/doctor/${d.user._id}`} className="btn-gradient inline-flex items-center justify-center w-full text-sm font-medium">View Profile</Link>
+                    </div>
+                    <div className="mt-6 pt-4 border-t border-gray-100">
+                      <Link to={`/doctor/${d.user._id}`} className="btn-gradient inline-flex items-center justify-center w-full py-3 rounded-xl text-sm font-bold shadow-lg hover:shadow-xl transition-all duration-300">View Profile</Link>
                     </div>
                   </div>
                 </div>
@@ -414,7 +425,7 @@ Book an appoinment        </Link>
                 <div className="font-semibold text-slate-900 mb-2 uppercase tracking-wide">Company</div>
                 <div className="space-y-2 text-slate-700 text-sm">
                   <Link to="/" className="hover:text-indigo-700 transition-colors duration-200 block">Home</Link>
-                  <Link to="/search" className="hover:text-indigo-700 transition-colors duration-200 block">Book an appoinment</Link>
+                  <Link to="/search" className="hover:text-indigo-700 transition-colors duration-200 block">Book Appointment</Link>
                   <Link to="/about" className="hover:text-indigo-700 transition-colors duration-200 block">About us</Link>
                   <Link to="/contact" className="hover:text-indigo-700 transition-colors duration-200 block">Contact</Link>
                 </div>

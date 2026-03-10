@@ -52,80 +52,101 @@ export default function BookAppointment() {
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white p-6 rounded-lg shadow-sm border border-slate-200 mt-8">
-      <div className="relative mb-10 text-center">
-        <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
-          Book Appointment
-          <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
-        </h1>
-      </div>
-
-      <input
-        type="date"
-        className="border p-2 w-full mb-3"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-      />
-
-      <select
-        className="border border-slate-300 rounded-md p-2 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-        value={type}
-        onChange={(e) => setType(e.target.value)}
-      >
-        <option value="offline">Clinic Visit</option>
-        <option value="online">Online Consultation</option>
-      </select>
-
-      <div className="mb-3">
-        <label className="block mb-2">For</label>
-        <div className="flex gap-4 mb-2">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="beneficiary"
-              checked={beneficiaryType === "self"}
-              onChange={() => setBeneficiaryType("self")}
-            />
-            <span>Self</span>
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              name="beneficiary"
-              checked={beneficiaryType === "family"}
-              onChange={() => setBeneficiaryType("family")}
-            />
-            <span>Family Member</span>
-          </label>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center py-20 px-4">
+      <div className="max-w-xl w-full bg-white/90 backdrop-blur-sm p-8 rounded-3xl shadow-2xl border border-white/40 animate-fade-in">
+        <div className="relative mb-10 text-center">
+          <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+            Book Appointment
+            <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+          </h1>
         </div>
-        {beneficiaryType === "family" && (
-          <input
-            className="border border-slate-300 rounded-md p-2 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            placeholder="Family member name"
-            value={beneficiaryName}
-            onChange={(e) => setBeneficiaryName(e.target.value)}
-          />
-        )}
+
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Select Date</label>
+            <input
+              type="date"
+              className="w-full p-3.5 border-2 border-slate-100 rounded-xl bg-slate-50/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-2">Consultation Type</label>
+            <select
+              className="w-full p-3.5 border-2 border-slate-100 rounded-xl bg-slate-50/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium cursor-pointer"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
+            >
+              <option value="offline">Clinic Visit</option>
+              <option value="online">Online Consultation</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-slate-700 mb-3">Who is this for?</label>
+            <div className="flex gap-6 mb-4">
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="beneficiary"
+                  className="w-5 h-5 text-indigo-600 border-2 border-slate-300 focus:ring-indigo-500 transition-all duration-300"
+                  checked={beneficiaryType === "self"}
+                  onChange={() => setBeneficiaryType("self")}
+                />
+                <span className="text-slate-700 font-semibold group-hover:text-indigo-600 transition-colors">Self</span>
+              </label>
+              <label className="flex items-center gap-3 cursor-pointer group">
+                <input
+                  type="radio"
+                  name="beneficiary"
+                  className="w-5 h-5 text-indigo-600 border-2 border-slate-300 focus:ring-indigo-500 transition-all duration-300"
+                  checked={beneficiaryType === "family"}
+                  onChange={() => setBeneficiaryType("family")}
+                />
+                <span className="text-slate-700 font-semibold group-hover:text-indigo-600 transition-colors">Family Member</span>
+              </label>
+            </div>
+            {beneficiaryType === "family" && (
+              <input
+                className="w-full p-3.5 border-2 border-slate-100 rounded-xl bg-slate-50/50 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-300 outline-none text-slate-700 font-medium animate-slide-in-up"
+                placeholder="Enter family member's full name"
+                value={beneficiaryName}
+                onChange={(e) => setBeneficiaryName(e.target.value)}
+              />
+            )}
+          </div>
+
+          <button
+            onClick={loadSlots}
+            className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] transform active:scale-95"
+          >
+            Show Available Slots
+          </button>
+
+          <div className="mt-8">
+            {slots.length === 0 ? (
+              <div className="text-center py-10 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                <span className="text-4xl block mb-2">📅</span>
+                <p className="text-slate-500 font-medium">Select a date to see available time slots</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3 animate-fade-in">
+                {slots.map((slot) => (
+                  <button
+                    key={`${slot.start}-${slot.end}`}
+                    onClick={() => bookSlot(slot)}
+                    className="p-4 border-2 border-slate-100 rounded-2xl bg-white hover:border-indigo-500 hover:bg-indigo-50 text-slate-700 font-bold transition-all duration-300 hover:scale-105 shadow-sm hover:shadow-md"
+                  >
+                    {slot.start} - {slot.end}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-
-      <button
-        onClick={loadSlots}
-        className="bg-indigo-600 hover:bg-indigo-700 text-white w-full py-2 rounded-md mb-4"
-      >
-        Load Available Slots
-      </button>
-
-      {slots.length === 0 && <p>No slots loaded yet</p>}
-
-      {slots.map((slot) => (
-        <button
-          key={`${slot.start}-${slot.end}`}
-          onClick={() => bookSlot(slot)}
-          className="block w-full p-2 mb-2 border border-slate-300 rounded-md hover:bg-slate-50"
-        >
-          {slot.start} - {slot.end}
-        </button>
-      ))}
     </div>
   );
 }

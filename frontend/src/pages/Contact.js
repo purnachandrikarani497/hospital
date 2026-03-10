@@ -18,7 +18,7 @@ export default function Contact() {
         <meta name="twitter:description" content="Get support and contact the HospoZen team." />
         <meta name="twitter:image" content={OG_FALLBACK} />
       </Helmet>
-      <div className="max-w-7xl mx-auto pt-8 px-4 animate-fade-in">
+      <div className="max-w-7xl mx-auto pt-24 px-4 animate-fade-in">
         <div className="relative mb-10 text-center">
           <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10 pb-4">
             Contact Information

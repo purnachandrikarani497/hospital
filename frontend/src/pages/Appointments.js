@@ -713,7 +713,7 @@ export default function Appointments() {
   };
 
   return (
-    <div className="page-gradient">
+    <div className="page-gradient min-h-screen flex flex-col items-center pt-24 md:pt-32 pb-20 px-4">
       <Helmet>
         <title>{isPrescriptionsView ? 'Prescriptions | HospoZen' : 'My Appointments | HospoZen'}</title>
         <meta name="description" content={isPrescriptionsView ? 'View and access your prescriptions, print or share securely.' : 'Manage bookings, join online consultations, pay, and follow up with doctors.'} />
@@ -740,472 +740,138 @@ export default function Appointments() {
           })}</script>
         )}
       </Helmet>
-      <div className="max-w-7xl mx-auto px-4 pt-12 md:pt-16 animate-fade-in">
-      
-      <div className="relative mb-10 text-center">
-        <h1 className="inline-block px-8 py-3 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
-          {isPrescriptionsView ? 'Prescriptions' : 'My appointments'}
-          <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
-        </h1>
-      </div>
-      <div className="glass-card rounded-2xl animate-slide-in-left">
-        {loading ? (
-          <div className="p-4 text-slate-600">Loading...</div>
-        ) : error ? (
-          <div className="p-4 text-red-600">{error}</div>
-        ) : (isPrescriptionsView ? presItems.length === 0 : list.length === 0) ? (
-          <div className="p-4 text-slate-600">{isPrescriptionsView ? 'No prescriptions found' : 'No appointments found'}</div>
-        ) : (
-          <div className="divide-y max-h-[75vh] overflow-y-auto custom-scrollbar pr-1">
-            {(isPrescriptionsView ? presItems : list).map((a) => (
-              <div key={a._id} className="p-4 md:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 card-hover">
-                <div className="flex items-center gap-3 sm:gap-4">
-                  {(() => {
-                    try {
-                      const docId = isPrescriptionsView ? String(a.docId || '') : String(a.doctor?._id || a.doctor || '');
-                      const prof = profiles.get(docId);
-                      const src = prof?.photoBase64;
-                      if (src && String(src).startsWith('data:image')) {
-                        return <img src={src} alt="Doctor" className="h-14 w-14 rounded-md object-cover border" />;
-                      }
-                    } catch (_) {}
-                    return <div className="h-14 w-14 rounded-md border bg-white" />;
-                  })()}
-                  <div>
-                    <div className="font-semibold">
+
+      <div className="max-w-4xl w-full animate-fade-in">
+        <div className="relative mb-12 text-center">
+          <h1 className="inline-block px-10 py-4 text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+            {isPrescriptionsView ? 'My Prescriptions' : 'My Appointments'}
+            <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
+          </h1>
+        </div>
+
+        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl border border-white/40 overflow-hidden animate-slide-in-up">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
+              <p className="text-slate-600 font-medium">Loading your records...</p>
+            </div>
+          ) : error ? (
+            <div className="p-10 text-center">
+              <div className="text-red-500 text-5xl mb-4">⚠️</div>
+              <p className="text-red-600 font-bold text-lg">{error}</p>
+            </div>
+          ) : (isPrescriptionsView ? presItems.length === 0 : list.length === 0) ? (
+            <div className="p-20 text-center">
+              <div className="text-6xl mb-6">📅</div>
+              <h3 className="text-2xl font-bold text-slate-800 mb-2">
+                {isPrescriptionsView ? 'No Prescriptions Yet' : 'No Appointments Found'}
+              </h3>
+              <p className="text-slate-500 max-w-sm mx-auto">
+                {isPrescriptionsView 
+                  ? "Your prescriptions will appear here once your doctor shares them." 
+                  : "You haven't booked any appointments yet. Start your healthcare journey today!"}
+              </p>
+              {!isPrescriptionsView && (
+                <button onClick={() => nav('/search')} className="mt-8 px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-bold hover:scale-105 transition-transform shadow-lg">
+                  Book Your First Appointment
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 max-h-[70vh] overflow-y-auto custom-scrollbar">
+              {(isPrescriptionsView ? presItems : list).map((a) => (
+                <div key={a._id} className="p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-slate-50/50 transition-colors duration-300">
+                  <div className="flex items-center gap-6">
+                    <div className="relative flex-shrink-0">
                       {(() => {
-                        if (isPrescriptionsView) return a.doctor || '';
-                        const docId = String(a.doctor?._id || a.doctor || '');
-                        const prof = profiles.get(docId);
-                        const busy = !!prof?.isBusy;
-                        const online = !!prof?.isOnline;
-                        const cls = busy ? 'bg-amber-500' : (online ? 'bg-green-500' : 'bg-red-500');
+                        try {
+                          const docId = isPrescriptionsView ? String(a.docId || '') : String(a.doctor?._id || a.doctor || '');
+                          const prof = profiles.get(docId);
+                          const src = prof?.photoBase64;
+                          if (src && String(src).startsWith('data:image')) {
+                            return <img src={src} alt="Doctor" className="h-20 w-20 rounded-2xl object-cover border-2 border-white shadow-md" />;
+                          }
+                        } catch (_) {}
                         return (
-                          <span className="inline-flex items-center gap-2">
-                            {a.doctor?.name ? `Dr. ${a.doctor?.name}` : ''}
-                            <span className={`h-2 w-2 rounded-full ${cls}`}></span>
-                          </span>
+                          <div className="h-20 w-20 rounded-2xl border-2 border-white bg-slate-100 flex items-center justify-center text-3xl shadow-md">
+                            👨‍⚕️
+                          </div>
                         );
                       })()}
                     </div>
-                    <div className="text-sm text-slate-700">Specialization: <span className="text-slate-900">{profiles.get(String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</span></div>
-                    <div className="text-sm text-slate-700">Date & Time: <span className="text-slate-900">{isPrescriptionsView ? `${a.date} | ${a.time}` : `${a.date} | ${a.startTime}`}</span></div>
-                    {!isPrescriptionsView && (() => {
-                      try {
-                        const docId = String(a.doctor?._id || a.doctor || '');
-                        const prof = profiles.get(docId);
-                        const addr = [prof?.clinic?.address, prof?.clinic?.city].filter(Boolean).join(', ');
-                        if (!addr) return null;
-                        return <div className="text-xs text-slate-600">Address: <span className="text-slate-900">{addr}</span></div>;
-                      } catch (_) { return null; }
-                    })()}
-                    {isPrescriptionsView && <div className="text-xs text-slate-600 truncate">{a.name}</div>}
+                    <div className="flex-grow">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h3 className="text-xl font-bold text-slate-900">
+                          {isPrescriptionsView ? a.doctor : (a.doctor?.name ? `Dr. ${a.doctor?.name}` : 'Unknown Doctor')}
+                        </h3>
+                        {!isPrescriptionsView && (() => {
+                          const docId = String(a.doctor?._id || a.doctor || '');
+                          const prof = profiles.get(docId);
+                          const busy = !!prof?.isBusy;
+                          const online = !!prof?.isOnline;
+                          return (
+                            <span className={`h-2.5 w-2.5 rounded-full ${busy ? 'bg-amber-500' : (online ? 'bg-green-500' : 'bg-red-500')} shadow-sm`} title={busy ? 'Busy' : (online ? 'Online' : 'Offline')}></span>
+                          );
+                        })()}
+                      </div>
+                      <div className="flex flex-col gap-1 text-sm font-medium">
+                        <div className="text-indigo-600">{profiles.get(String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</div>
+                        <div className="text-slate-500 flex items-center gap-2">
+                          <span>📅 {isPrescriptionsView ? a.date : a.date}</span>
+                          <span className="text-slate-300">|</span>
+                          <span>🕒 {isPrescriptionsView ? a.time : a.startTime}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-3 items-center justify-start sm:justify-end">
+                    {isPrescriptionsView ? (
+                      <button onClick={() => setPresModalAppt(a)} className="px-6 py-2 rounded-xl bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100 transition-colors border border-indigo-200">
+                        Open Prescription
+                      </button>
+                    ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
+                      <div className="flex flex-col items-end gap-2">
+                        <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase tracking-wider">Cancelled</span>
+                        <button onClick={() => nav(`/doctor/${String(a.doctor?._id || a.doctor)}`)} className="text-indigo-600 text-sm font-bold hover:underline">Rebook Appointment</button>
+                      </div>
+                    ) : String(a.status).toUpperCase() === 'COMPLETED' ? (
+                      <div className="flex flex-wrap gap-2">
+                        {a.prescriptionText && (
+                          <button onClick={() => setPresModalAppt(a)} className="px-4 py-2 rounded-xl bg-green-50 text-green-700 font-bold hover:bg-green-100 transition-colors border border-green-200">
+                            Prescription
+                          </button>
+                        )}
+                        {canFollowUp(a) && (
+                          <button onClick={() => nav(`/appointments/${a._id}/followup`)} className="px-4 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition-colors shadow-md">
+                            Follow-up
+                          </button>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        {isJoinWindow(a) && (
+                          <button onClick={() => window.open(meetLinkFor(a), meetWindowName(a._id))} className="px-6 py-2 rounded-xl bg-green-600 text-white font-bold hover:bg-green-700 transition-all shadow-lg hover:scale-105">
+                            Join Meeting
+                          </button>
+                        )}
+                        {canCancelAppt(a) && (
+                          <button onClick={() => cancel(a._id)} className="px-4 py-2 rounded-xl border-2 border-red-100 text-red-600 font-bold hover:bg-red-50 transition-colors">
+                            Cancel
+                          </button>
+                        )}
+                        <button onClick={() => setDetailsAppt(a)} className="px-4 py-2 rounded-xl border-2 border-slate-100 text-slate-700 font-bold hover:bg-slate-50 transition-colors">
+                          Details
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-2 items-center w-full sm:w-auto sm:justify-end mt-2 sm:mt-0">
-                  {isPrescriptionsView ? (
-                  <button onClick={() => setPresModalAppt(a)} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Open</button>
-                ) : String(a.status).toUpperCase() === 'CANCELLED' ? (
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Cancelled</span>
-                      {(() => {
-                        const byMe = localStorage.getItem(`cancelledByMe_${String(a._id || a.id)}`) === '1';
-                        const docId = String(a.doctor?._id || a.doctor || '');
-                        const label = byMe ? 'You cancelled this appointment' : 'Doctor cancelled your appointment';
-                        return (
-                          <>
-                            <span className="text-xs text-slate-600">{label}</span>
-                            {!byMe && docId && (
-                              <button
-                                onClick={() => nav(`/doctor/${String(docId)}`)}
-                                className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
-                              >
-                                Book Next Slot
-                              </button>
-                            )}
-                          </>
-                        );
-                      })()}
-                    </div>
-                  ) : String(a.status).toUpperCase() === 'COMPLETED' ? (
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Consultation Completed</span>
-                      {a.prescriptionText && (
-                        <button
-                          onClick={() => setPresModalAppt(a)}
-                          className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
-                        >
-                          View Prescription
-                        </button>
-                      )}
-                      {canFollowUp(a) && (
-                        <button
-                          onClick={() => { const id = String(a._id || a.id || ''); if (id) { try { localStorage.setItem('lastChatApptId', id); } catch(_) {}; nav(`/appointments/${id}/followup`); } }}
-                          className="border border-green-600 text-green-700 px-3 py-1 rounded-md"
-                        >
-                          Follow-up
-                        </button>
-                      )}
-                      <button
-                        onClick={() => {
-                          const docId = String(a.doctor?._id || a.doctor || '');
-                          if (docId) nav(`/doctor/${docId}`);
-                        }}
-                        className="border border-slate-300 px-3 py-1 rounded-md"
-                      >
-                        Book Next Slot
-                      </button>
-                      {(() => {
-                        const key = `rate_${String(a._id || a.id || '')}`;
-                        let rated = false;
-                        try { rated = Number(localStorage.getItem(`${key}_stars`) || 0) > 0; } catch(_) {}
-                        return (
-                          <button
-                            onClick={() => {
-                              if (rated) return;
-                              setRateAppt(a);
-                              try {
-                                const stars = Number(localStorage.getItem(`${key}_stars`) || 0) || 0;
-                                const text = String(localStorage.getItem(`${key}_comment`) || '') || '';
-                                setRateStars(stars);
-                                setRateText(text);
-                              } catch(_) { setRateStars(0); setRateText(''); }
-                            }}
-                            disabled={rated}
-                            className={`border px-3 py-1 rounded-md ${rated ? 'border-slate-300 text-slate-400 cursor-not-allowed' : 'border-green-600 text-green-700'}`}
-                          >
-                            {rated ? 'Rated' : 'Rate Doctor'}
-                          </button>
-                        );
-                      })()}
-                    </div>
-                  ) : String(a.status).toUpperCase() === 'JOINED' ? (
-                    <div className="flex flex-wrap gap-2 items-center">
-                      <span className="inline-block text-xs px-2 py-1 rounded bg-blue-100 text-blue-700">Joined</span>
-                      {(() => {
-                        const id = String(a._id || a.id || '');
-                        return (
-                          <button
-                            onClick={() => {
-                              try { localStorage.setItem(`joinedByPatient_${id}`, '0'); } catch(_) {}
-                              try { socketRef.current && socketRef.current.emit('meet:update', { apptId: id, actor: 'patient', event: 'exit' }); } catch(_) {}
-                              setList((prev) => prev.map((x) => (String(x._id || x.id) === id ? { ...x, status: 'CONFIRMED' } : x)));
-                            }}
-                            className="border border-red-600 text-red-700 px-3 py-1 rounded-md"
-                          >
-                            Leave
-                          </button>
-                        );
-                      })()}
-                    </div>
-                  ) : (
-                    <>
-                      {a.type === 'online' && String(a.status).toUpperCase() === 'CONFIRMED' && (
-                        (() => {
-                          try {
-                            const start = new Date(a.date);
-                            const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                            start.setHours(sh, sm, 0, 0);
-                            const end = new Date(a.date);
-                            const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                            end.setHours(eh, em, 0, 0);
-                            const now = Date.now();
-                            const docId = String(a.doctor?._id || a.doctor || '');
-                            if (now >= end.getTime()) {
-                              return (
-                                <>
-                                  <span className="inline-block text-xs px-2 py-1 rounded bg-red-100 text-red-700">Time Expired</span>
-                                  {docId && (
-                                    <button onClick={() => nav(`/doctor/${String(docId)}`)} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Book Next Slot</button>
-                                  )}
-                                  {a.isPrescriptionShared && a.prescriptionText && (
-                                    <button
-                                      onClick={() => setPresModalAppt(a)}
-                                      className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
-                                    >
-                                      View Prescription
-                                    </button>
-                                  )}
-                                  
-                                </>
-                              );
-                            }
-                            const early = start.getTime() - 5 * 60 * 1000;
-                            if (now < early) {
-                              return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Available 5 min before</span>;
-                            }
-                            const link = meetLinkFor(a);
-                            const url = String(link).replace(/[`'\"]/g, '').trim();
-                            if (!url || !/^https?:\/\//.test(url)) {
-                              return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Waiting for doctor to set meeting link</span>;
-                            }
-                            return (
-                              <>
-                            {(() => {
-                              const id = String(a._id || a.id || '');
-                              const joinedPatient = id ? localStorage.getItem(`joinedByPatient_${id}`) === '1' : false;
-                              const joinedDoctor = id ? localStorage.getItem(`doctorJoined_${id}`) === '1' : false;
-                              const joined = joinedPatient || joinedDoctor;
-                              return joined ? (
-                                <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Joined</span>
-                              ) : null;
-                            })()}
-                                {(() => {
-                                  const id = String(a._id || a.id || '');
-                                  const jp = id ? localStorage.getItem(`joinedByPatient_${id}`) : null;
-                                  const joinedPatient = jp === '1';
-                                  const leftPatient = jp === '0';
-                                  const joinedDoctor = id ? localStorage.getItem(`doctorJoined_${id}`) === '1' : false;
-                                  const joined = joinedPatient || joinedDoctor;
-                                  if (joined) {
-                                    return <span className="inline-block text-xs px-2 py-1 rounded bg-green-50 text-green-700">You are now connected to the consultation.</span>;
-                                  }
-                                  if (leftPatient) {
-                                    return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">You have left the meeting. You can rejoin anytime until the session ends.</span>;
-                                  }
-                                  return <span className="inline-block text-xs px-2 py-1 rounded bg-amber-100 text-amber-700">Meeting not started yet. Click Join Meet to enter the consultation.</span>;
-                                })()}
-                                {(() => {
-                                  const id = String(a._id || a.id || '');
-                                  const jp = id ? localStorage.getItem(`joinedByPatient_${id}`) : null;
-                                  const joinedPatient = jp === '1';
-                                  const leftPatient = jp === '0';
-                                  const joinedDoctor = id ? localStorage.getItem(`doctorJoined_${id}`) === '1' : false;
-                                  const joined = joinedPatient || joinedDoctor;
-                                  const openAndMonitor = () => {
-                                    try {
-                                      const idX = String(a._id || a.id);
-                                      localStorage.setItem(`joinedByPatient_${idX}`, '1');
-                                      setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'JOINED' } : x)));
-                                    } catch(_) {}
-                                    const name = meetWindowName(id);
-                                    const win = window.open(url, name);
-                                    try { localStorage.setItem(`openMeeting_${String(a._id || a.id)}`, '1'); } catch(_) {}
-                                    try { meetWinRef.current[id] = win; } catch(_) {}
-                                    try { socketRef.current && socketRef.current.emit('meet:update', { apptId: String(a._id || a.id), actor: 'patient', event: 'join' }); } catch(_) {}
-                                    try {
-                                      const idX = String(a._id || a.id);
-                                      try { localStorage.setItem(`everJoinedPatient_${idX}`, '1'); } catch(_) {}
-                                      const monitor = setInterval(async () => {
-                                        const end = new Date(a.date);
-                                        const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                                        end.setHours(eh, em, 0, 0);
-                                        const now = Date.now();
-                                        const expired = now >= end.getTime();
-                                        if (expired) {
-                                          const djEver = localStorage.getItem(`everJoinedDoctor_${idX}`) === '1';
-                                          const pjEver = localStorage.getItem(`everJoinedPatient_${idX}`) === '1';
-                                          const both = djEver && pjEver;
-                                          try {
-                                            if (both) {
-                                              await API.put(`/appointments/${idX}/complete`);
-                                            }
-                                          } catch(_) {}
-                                          try {
-                                            localStorage.setItem(`joinedByPatient_${idX}`, '0');
-                                            localStorage.setItem(`openMeeting_${idX}`, '0');
-                                            setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: both ? 'COMPLETED' : 'CONFIRMED' } : x)));
-                                          } catch(_) {}
-                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: both ? 'complete' : 'exit' }); } catch(_) {}
-                                          try {
-                                            const w = meetWinRef.current[idX];
-                                            if (w && !w.closed) w.close();
-                                            const name = meetWindowName(idX);
-                                            const w2 = window.open('', name);
-                                            if (w2 && !w2.closed) w2.close();
-                                            meetWinRef.current[idX] = null;
-                                          } catch(_) {}
-                                          clearInterval(monitor);
-                                          meetMonitorRef.current[idX] = null;
-                                          return;
-                                        }
-                                        if (!win || win.closed) {
-                                          clearInterval(monitor);
-                                          meetMonitorRef.current[idX] = null;
-                                          try { localStorage.setItem(`joinedByPatient_${idX}`, '0'); localStorage.setItem(`openMeeting_${idX}`, '0'); setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'CONFIRMED' } : x))); } catch(_) {}
-                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: idX, actor: 'patient', event: 'exit' }); } catch(_) {}
-                                        }
-                                      }, 1000);
-                                      meetMonitorRef.current[idX] = monitor;
-                                    } catch(_) {}
-                                  };
-                                  if (joined) {
-                                    return (
-                                      <button
-                                        onClick={() => {
-                                          try {
-                                            const idX = String(a._id || a.id);
-                                            localStorage.setItem(`joinedByPatient_${idX}`, '0');
-                                            localStorage.setItem(`openMeeting_${idX}`, '0');
-                                            setList((prev) => prev.map((x) => (String(x._id || x.id) === idX ? { ...x, status: 'CONFIRMED' } : x)));
-                                          } catch(_) {}
-                                          try { socketRef.current && socketRef.current.emit('meet:update', { apptId: String(a._id || a.id), actor: 'patient', event: 'exit' }); } catch(_) {}
-                                          try {
-                                            const idX = String(a._id || a.id);
-                                            const mon = meetMonitorRef.current[idX];
-                                            if (mon) { clearInterval(mon); meetMonitorRef.current[idX] = null; }
-                                            const w = meetWinRef.current[idX];
-                                            if (w && !w.closed) { w.close(); }
-                                            meetWinRef.current[idX] = null;
-                                            try {
-                                              const name = meetWindowName(idX);
-                                              const w2 = window.open('', name);
-                                              if (w2 && !w2.closed) w2.close();
-                                            } catch(_) {}
-                                          } catch(_) {}
-                                        }}
-                                        className="border border-red-600 text-red-700 px-3 py-1 rounded-md"
-                                      >
-                                        Leave
-                                      </button>
-                                    );
-                                  }
-                                  if (leftPatient) {
-                                    return (
-                                      <button onClick={openAndMonitor} className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md">Rejoin</button>
-                                    );
-                                  }
-                                  return (
-                                    <button onClick={openAndMonitor} className="border border-green-600 text-green-700 px-3 py-1 rounded-md">Join Meet</button>
-                                  );
-                                })()}
-                              </>
-                            );
-                          } catch (_) { return null; }
-                        })()
-                      )}
-                      {(() => {
-                        try {
-                          const start = new Date(a.date);
-                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                          start.setHours(sh, sm, 0, 0);
-                          const end = new Date(a.date);
-                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                          end.setHours(eh, em, 0, 0);
-                          const now = Date.now();
-                          const expired = now >= end.getTime();
-                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
-                          if (expired || completed) return null;
-                        } catch(_) {}
-                        return (
-                          <button
-                            onClick={() => {
-                              const id = String(a._id || a.id);
-                              nav(`/appointments/${id}/details`);
-                            }}
-                            className="border border-slate-600 text-slate-700 px-3 py-1 rounded-md"
-                          >
-                            View Details
-                          </button>
-                        );
-                      })()}
-                      
-                      {(() => {
-                        try {
-                          const start = new Date(a.date);
-                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                          start.setHours(sh, sm, 0, 0);
-                          const end = new Date(a.date);
-                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                          end.setHours(eh, em, 0, 0);
-                          const now = Date.now();
-                          const expired = now >= end.getTime();
-                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
-                          if (expired || completed) return null;
-                        } catch(_) {}
-                        return (String(a.paymentStatus).toUpperCase() !== 'PAID' ? (
-                          <button
-                            onClick={() => nav(`/pay/${a._id}`)}
-                            className="border border-slate-300 px-3 py-1 rounded-md"
-                          >
-                            Pay Online
-                          </button>
-                        ) : (
-                          <span className="inline-block text-xs px-2 py-1 rounded bg-green-100 text-green-700">Paid</span>
-                        ));
-                      })()}
-                      {(() => {
-                        try {
-                          const start = new Date(a.date);
-                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                          start.setHours(sh, sm, 0, 0);
-                          const end = new Date(a.date);
-                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                          end.setHours(eh, em, 0, 0);
-                          const now = Date.now();
-                          const expired = now >= end.getTime();
-                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
-                          if (expired || completed) return null;
-                        } catch(_) {}
-                        return (canCancelAppt(a) && (
-                          <button
-                            onClick={() => cancel(a._id || a.id)}
-                            disabled={!a?._id}
-                            className={`border px-3 py-1 rounded-md ${(!a?._id) ? 'border-slate-200 text-slate-400 cursor-not-allowed' : 'border-slate-300'}`}
-                          >
-                            Cancel appointment
-                          </button>
-                        ));
-                      })()}
-                      {(() => {
-                        try {
-                          const start = new Date(a.date);
-                          const [sh, sm] = String(a.startTime || '00:00').split(':').map((x) => Number(x));
-                          start.setHours(sh, sm, 0, 0);
-                          const end = new Date(a.date);
-                          const [eh, em] = String(a.endTime || a.startTime || '00:00').split(':').map((x) => Number(x));
-                          end.setHours(eh, em, 0, 0);
-                          const now = Date.now();
-                          const expired = now >= end.getTime();
-                          const completed = String(a.status).toUpperCase() === 'COMPLETED';
-                          if (expired || completed) return null;
-                        } catch(_) {}
-                        return (a.prescriptionText && (
-                          <>
-                            <button
-                              onClick={() => setPresModalAppt(a)}
-                              className="border border-indigo-600 text-indigo-700 px-3 py-1 rounded-md"
-                            >
-                              View Prescription
-                            </button>
-                            <button
-                              onClick={() => window.open(`/prescription/${a._id || a.id}?print=1`, '_blank')}
-                              className="border border-slate-300 px-3 py-1 rounded-md"
-                            >
-                              Download PDF
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const url = `${window.location.origin}/prescription/${a._id || a.id}`;
-                                try { await navigator.clipboard.writeText(url); alert('Link copied for pharmacy'); } catch(_) {}
-                              }}
-                              className="border border-slate-300 px-3 py-1 rounded-md"
-                            >
-                              Share to pharmacy
-                            </button>
-                            <button
-                              onClick={async () => {
-                                const url = `${window.location.origin}/prescription/${a._id || a.id}`;
-                                try { await navigator.clipboard.writeText(url); alert('Link copied for lab tests'); } catch(_) {}
-                              }}
-                              className="border border-slate-300 px-3 py-1 rounded-md"
-                            >
-                              Share for lab tests
-                            </button>
-                            {null}
-                          </>
-                        ));
-                      })()}
-                    </>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+              ))}
+            </div>
+          )}
+        </div>
       </div>
-      
-      
+
       {waitingAppt && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl border border-slate-200 w-[95vw] max-w-2xl overflow-hidden">
@@ -1822,7 +1488,6 @@ export default function Appointments() {
         </div>
       )}
 
-      </div>
     </div>
   );
 }

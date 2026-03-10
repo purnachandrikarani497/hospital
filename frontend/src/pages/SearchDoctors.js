@@ -145,8 +145,8 @@ export default function SearchDoctors() {
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
-  const pageTitle = specialization ? `Find ${specialization} | HospoZen` : (q ? `Book an appoinment: ${q} | HospoZen` : 'Book an appoinment | HospoZen');
-  const pageDesc = specialization ? `Browse and book ${specialization} near you.` : (q ? `Search results for doctors matching "${q}".` : 'Search and book verified doctors by specialization, experience, and ratings.');
+  const pageTitle = isAdmin ? "Admin | Doctors Management" : "Book Appointment | HospoZen";
+  const pageDesc = isAdmin ? "Manage doctors, view profiles, and edit specializations." : "Find and book an appointment with verified doctors on HospoZen.";
 
   if (isAdmin) {
     return (
@@ -260,13 +260,13 @@ export default function SearchDoctors() {
             )}
           </div>
         </header>
-        <div className="pt-4 px-4 sm:px-6 page-gradient">
+        <div className="pt-24 px-4 sm:px-6 page-gradient">
           <div className="max-w-7xl mx-auto relative">
             <div className="absolute inset-x-0 -top-6 h-20 bg-gradient-to-r from-indigo-100 via-purple-100 to-blue-100 blur-xl opacity-70 rounded-full pointer-events-none"></div>
             <div className="animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'forwards' }}>
               <div className="relative mb-10 text-center">
                 <h2 className="inline-block px-8 py-3 text-xl sm:text-2xl md:text-3xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10 pb-4">
-                  Doctors Management
+                  {isAdmin ? 'Doctors Management' : 'Book Appointment'}
                   <div className="absolute -bottom-1 left-0 right-0 h-1.5 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
                 </h2>
               </div>
@@ -481,18 +481,18 @@ export default function SearchDoctors() {
                 </button>
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
                 {list.map((d, index) => (
-                  <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
-                    <div className="relative">
+                  <div key={d._id} className="bg-white/90 backdrop-blur-sm rounded-2xl border border-white/30 shadow-xl overflow-hidden hover:scale-105 hover:shadow-2xl transition-all duration-500 animate-zoom-in opacity-0 flex flex-col h-full" style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'forwards' }}>
+                    <div className="relative h-64 flex-shrink-0">
                       {photoOf(d) ? (
                         <img
                           src={photoOf(d)}
                           alt="Doctor"
-                          className="w-full h-64 object-cover hover:scale-110 transition-transform duration-700"
+                          className="w-full h-full object-cover hover:scale-110 transition-transform duration-700"
                         />
                       ) : (
-                        <div className="w-full h-64 bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center hover:scale-110 transition-transform duration-700">
+                        <div className="w-full h-full bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center hover:scale-110 transition-transform duration-700">
                           <div className="text-6xl text-slate-400">👨‍⚕️</div>
                         </div>
                       )}
@@ -506,25 +506,29 @@ export default function SearchDoctors() {
                         })()}
                       </div>
                     </div>
-                    <div className="p-6 animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
-                      <h3 className="text-lg font-bold text-slate-800 mb-1">{`Dr. ${d.user?.name || ''}`}</h3>
-                      {(() => { const avg = Number(d?.averageRating || 0) || 0; if (avg === 0) return null; const s = Math.round(avg); return (
-                        <div className="mb-2 flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            {[1,2,3,4,5].map((n) => (
-                              <svg key={n} className={`w-5 h-5 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                            ))}
+                    <div className="p-6 flex flex-col flex-grow animate-fade-in" style={{ animationDelay: `${index * 0.1 + 0.5}s`, animationFillMode: 'forwards' }}>
+                      <div className="flex-grow">
+                        <h3 className="text-lg font-bold text-slate-800 mb-1 line-clamp-1">{`Dr. ${d.user?.name || ''}`}</h3>
+                        {(() => { const avg = Number(d?.averageRating || 0) || 0; if (avg === 0) return <div className="mb-2 min-h-[1.5rem]"></div>; const s = Math.round(avg); return (
+                          <div className="mb-2 flex items-center gap-2 min-h-[1.5rem]">
+                            <div className="flex items-center gap-1">
+                              {[1,2,3,4,5].map((n) => (
+                                <svg key={n} className={`w-4 h-4 ${s>=n ? 'text-amber-500' : 'text-slate-300'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                              ))}
+                            </div>
+                            <span className="text-sm font-medium text-slate-700">{avg.toFixed(1)}</span>
                           </div>
-                          <span className="text-sm font-medium text-slate-700">{avg.toFixed(1)}</span>
-                        </div>
-                      ); })()}
-                      <p className="text-sm text-indigo-600 font-medium mb-2">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
-                      {typeof d.consultationFees === 'number' && (
-                        <div className="text-sm text-slate-600 font-semibold mb-3">Consultation Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
-                      )}
-                      <Link to={`/doctor/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
-                        View Profile
-                      </Link>
+                        ); })()}
+                        <p className="text-sm text-indigo-600 font-bold mb-2 line-clamp-2 min-h-[2.5rem]">{Array.isArray(d.specializations) ? d.specializations.join(", ") : (typeof d.specializations === "string" ? d.specializations : "")}</p>
+                        {typeof d.consultationFees === 'number' && (
+                          <div className="text-sm text-slate-600 font-bold mb-4">Consultation Fee: <span className="text-green-600">₹{d.consultationFees}</span></div>
+                        )}
+                      </div>
+                      <div className="mt-auto pt-4 border-t border-slate-100">
+                        <Link to={`/doctor/${d.user._id}`} className="inline-flex items-center justify-center w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-bold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+                          View Profile
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 ))}

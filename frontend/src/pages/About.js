@@ -57,7 +57,7 @@ export default function About() {
       <section className="relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-indigo-300/40 to-purple-300/40 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-gradient-to-br from-blue-300/40 to-cyan-300/40 rounded-full blur-3xl" />
-        <div className="max-w-7xl mx-auto px-4 pt-12 md:pt-16">
+        <div className="max-w-7xl mx-auto px-4 pt-24 md:pt-32">
           <div className="grid md:grid-cols-2 gap-8 items-center">
             <div className="animate-slide-in-left">
               <div className="relative mb-10 text-center">
@@ -143,8 +143,8 @@ export default function About() {
             <div className="text-xl sm:text-2xl md:text-3xl font-extrabold">Ready to get started?</div>
             <div className="text-indigo-100 mt-2">Search a specialist and book your appointment now.</div>
           </div>
-          <div className="flex items-center gap-4">Book an appoinment
-            <a href="/search" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition"></a>
+          <div className="flex items-center gap-4">
+            <a href="/search" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Book an appointment</a>
             <a href="/contact" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Contact Us</a>
           </div>
         </div>

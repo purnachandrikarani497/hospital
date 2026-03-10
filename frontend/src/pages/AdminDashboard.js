@@ -161,33 +161,39 @@ export default function AdminDashboard() {
             </h2>
           </div>
           <div className="flex flex-wrap gap-4 mb-6">
-            <div className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">👨‍⚕️</div>
-                  <div className="text-sm text-slate-600">Doctors</div>
+            <Link to="/admin/doctors" className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600">
+                  <span className="text-2xl">👨‍⚕️</span>
                 </div>
-                <div className="text-2xl font-semibold animate-pulse">{doctorCount}</div>
-              </div>
-            </div>
-            <div className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">📅</div>
-                  <div className="text-sm text-slate-600">Appointments</div>
+                <div>
+                  <div className="text-slate-500 text-sm">Doctors</div>
+                  <div className="text-2xl font-bold text-slate-900">{doctorCount || 0}</div>
                 </div>
-                <div className="text-2xl font-semibold animate-pulse">{appointmentCount}</div>
               </div>
-            </div>
-            <div className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center animate-pulse">👥</div>
-                  <div className="text-sm text-slate-600">Patients</div>
+            </Link>
+            <Link to="/admin/appointments" className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center text-purple-600">
+                  <span className="text-2xl">📅</span>
                 </div>
-                <div className="text-2xl font-semibold animate-pulse">{patientCount}</div>
+                <div>
+                  <div className="text-slate-500 text-sm">Appointments</div>
+                  <div className="text-2xl font-bold text-slate-900">{appointmentCount || 0}</div>
+                </div>
               </div>
-            </div>
+            </Link>
+            <Link to="/admin/dashboard" className="relative flex-1 min-w-[160px] glass-card p-6 rounded-2xl card-hover">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-indigo-100 rounded-xl flex items-center justify-center text-indigo-600">
+                  <span className="text-2xl">👥</span>
+                </div>
+                <div>
+                  <div className="text-slate-500 text-sm">Patients</div>
+                  <div className="text-2xl font-bold text-slate-900">{patientCount || 0}</div>
+                </div>
+              </div>
+            </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-6 mb-10">
