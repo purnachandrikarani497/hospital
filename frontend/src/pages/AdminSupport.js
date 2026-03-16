@@ -38,8 +38,19 @@ export default function AdminSupport() {
     <div className="min-h-screen bg-gray-50">
       <AdminHeader />
       <div className="max-w-7xl mx-auto pt-24 px-4 sm:px-6">
-        <div className="flex items-center gap-4 mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Support Requests</h1>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate(-1)}
+              className="p-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-blue-600 hover:border-blue-300 transition-all duration-300 shadow-sm"
+              title="Go Back"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+              </svg>
+            </button>
+            <h1 className="text-3xl font-bold text-gray-800">Support Requests</h1>
+          </div>
         </div>
         {loading ? (
           <p>Loading...</p>
