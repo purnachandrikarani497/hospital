@@ -5,8 +5,8 @@ import { useEffect, useRef, useState, useMemo } from "react";
 import API from "../api";
 
 export default function Home() {
-  const FALLBACK = "https://www.ecotowndiagnostics.com/wp-content/uploads/2024/06/818dce83d6.jpg";
-  const LOCAL = "/uploads/Screenshot 2025-12-03 145101.png";
+  const FALLBACK = "https://images.unsplash.com/photo-1550831107-1553da8c8464?auto=format&fit=crop&w=1280&q=80";
+  const LOCAL = "/uploads/Screenshot 2026-03-16 145132.png";
   const CARD_FALLBACK = "https://images.unsplash.com/photo-1537368910025-700350fe46c7?q=80&w=640&auto=format&fit=crop";
   const [heroSrc, setHeroSrc] = useState(FALLBACK);
   const [list, setList] = useState([]);
@@ -116,7 +116,7 @@ export default function Home() {
   useEffect(() => {
     if (didInit.current) return;
     didInit.current = true;
-    const bust = `${LOCAL}?v=${Date.now()}`;
+    const bust = `${LOCAL}${LOCAL.includes('?') ? '&' : '?'}v=${Date.now()}`;
     const img = new Image();
     img.onload = () => setHeroSrc(LOCAL);
     img.onerror = () => setHeroSrc(FALLBACK);
@@ -251,8 +251,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-gradient-to-r from-blue-400 via-purple-500 to-pink-500 rounded-3xl transform rotate-6 opacity-15 group-hover:rotate-3 transition-transform duration-700"></div>
                   <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-500 rounded-3xl transform -rotate-3 opacity-10 group-hover:-rotate-1 transition-transform duration-700"></div>
                   <picture>
-                    <source type="image/webp" srcSet={LOCAL.replace('.png','.webp')} />
-                    <img src={heroSrc} alt="HospoZen healthcare platform" loading="lazy" decoding="async" width="1280" height="720" className="relative w-full rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-700 border-4 border-white/60 group-hover:border-white/80" />
+                    <img src={heroSrc} alt="Doctor and patient consultation in clinic" loading="lazy" decoding="async" width="1280" height="720" className="relative w-full h-[420px] object-contain object-center rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-700 border-4 border-white/60 group-hover:border-white/80 bg-white" />
                   </picture>
                   <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg animate-pulse">
                     <span className="text-blue-600 text-2xl">🏥</span>
