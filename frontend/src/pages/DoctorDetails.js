@@ -312,6 +312,13 @@ export default function DoctorDetails() {
                 </div>
               ); 
             })()}
+            {myStars > 0 && (
+              <div className="mt-4 flex items-center gap-1 text-amber-500">
+                {[1,2,3,4,5].map((n) => (
+                  <svg key={n} className={`w-5 h-5 ${myStars>=n ? '' : 'opacity-40'}`} viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                ))}
+              </div>
+            )}
           </div>
       </div>
       </div>

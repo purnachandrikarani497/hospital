@@ -13,85 +13,78 @@ router.get('/', async (req, res) => {
     const { q, city, specialization, user, ids } = req.query;
     const mongoose = require('mongoose');
 
-    // 1. Build initial query for DoctorProfile
-    const profileCriteria = {};
-    if (city) profileCriteria['clinic.city'] = new RegExp(city, 'i');
-    if (specialization) profileCriteria['specializations'] = specialization;
+    // 1. Prepare filtering criteria
+    const matchCriteria = {
+      'user_info.role': 'doctor',
+      'user_info.isDoctorApproved': true
+    };
+
+    if (city) matchCriteria['clinic.city'] = new RegExp(city, 'i');
+    if (specialization) matchCriteria['specializations'] = specialization;
     
     if (user && mongoose.Types.ObjectId.isValid(user)) {
-      profileCriteria['user'] = new mongoose.Types.ObjectId(String(user));
+      matchCriteria['user'] = new mongoose.Types.ObjectId(String(user));
     } else if (ids) {
       const idArray = String(ids).split(',')
         .filter(id => mongoose.Types.ObjectId.isValid(id.trim()))
         .map(id => new mongoose.Types.ObjectId(id.trim()));
-      if (idArray.length) profileCriteria['user'] = { $in: idArray };
+      if (idArray.length) matchCriteria['user'] = { $in: idArray };
     }
 
-    // Always filter by approved doctors only
-    const approvedDoctorUsers = await User.find({
-      role: 'doctor',
-      isDoctorApproved: true
-    }).select('_id name');
-    const approvedDoctorIds = approvedDoctorUsers.map(u => u._id);
-
-    // If searching by name (q), we need to further narrow down user IDs
     if (q) {
       const qRegex = new RegExp(String(q), 'i');
-      const matchingUserIds = approvedDoctorUsers
-        .filter(u => qRegex.test(u.name))
-        .map(u => u._id);
-      
-      // Also search by clinic name or specialization in the profile
-      profileCriteria.$or = [
+      matchCriteria.$or = [
+        { 'user_info.name': qRegex },
         { 'clinic.name': qRegex },
         { 'specializations': { $in: [qRegex] } }
       ];
-      if (matchingUserIds.length) {
-        profileCriteria.$or.push({ 'user': { $in: matchingUserIds } });
-      }
     }
 
-    // Ensure we only get approved doctors
-    if (profileCriteria.user) {
-        // If user/ids were already specified, intersect with approved IDs
-        if (profileCriteria.user.$in) {
-            profileCriteria.user.$in = profileCriteria.user.$in.filter(id => 
-                approvedDoctorIds.some(aid => String(aid) === String(id))
-            );
-        } else {
-            if (!approvedDoctorIds.some(aid => String(aid) === String(profileCriteria.user))) {
-                profileCriteria.user = { $in: [] }; // No match
-            }
+    // 2. Execute efficient aggregation pipeline
+    const pipeline = [
+      {
+        $lookup: {
+          from: 'users', // The name of the User collection
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user_info'
         }
-    } else {
-        profileCriteria.user = { $in: approvedDoctorIds };
-    }
+      },
+      { $unwind: '$user_info' },
+      { $match: matchCriteria },
+      {
+        $project: {
+          'user_info.passwordHash': 0, // Exclude password hash
+          'user_info.resetOtp': 0,
+          'user_info.resetOtpExpires': 0
+        }
+      }
+    ];
 
-    // 2. Execute query with populate and fetch ratings in parallel
-    const [doctors, stats] = await Promise.all([
-      DoctorProfile.find(profileCriteria)
-        .select('user specializations experienceYears photoBase64 clinic consultationFees isOnline isBusy')
-        .populate({
-          path: 'user',
-          select: 'name email phone role isDoctorApproved'
-        })
-        .limit(50)
-        .lean(),
-      
-      Appointment.aggregate([
-        { $match: { doctor: { $in: approvedDoctorIds }, ratingStars: { $gte: 1 } } },
-        { $group: { _id: '$doctor', avg: { $avg: '$ratingStars' } } }
-      ])
-    ]);
+    let doctors = await DoctorProfile.aggregate(pipeline);
 
-    // 3. Map ratings to doctors
-    const ratingMap = new Map(stats.map(s => [String(s._id), s.avg ? Number(s.avg.toFixed(1)) : 0]));
-    
-    doctors.forEach(d => {
-      d.averageRating = ratingMap.get(String(d.user._id)) || 0;
+    // 3. Normalize the output format (mapping user_info back to user)
+    doctors = doctors.map(d => {
+      const normalized = { ...d, user: d.user_info };
+      delete normalized.user_info;
+      return normalized;
     });
 
-    console.log(`GET /api/doctors took ${Date.now() - start}ms (optimized parallel)`);
+    // 4. Batch fetch ratings for the found doctors
+    if (doctors.length) {
+      const doctorIds = doctors.map(d => d.user._id);
+      const stats = await Appointment.aggregate([
+        { $match: { doctor: { $in: doctorIds }, ratingStars: { $gte: 1 } } },
+        { $group: { _id: '$doctor', avg: { $avg: '$ratingStars' } } }
+      ]);
+      const ratingMap = new Map(stats.map(s => [String(s._id), s.avg ? Number(s.avg.toFixed(1)) : 0]));
+      
+      doctors.forEach(d => {
+        d.averageRating = ratingMap.get(String(d.user._id)) || 0;
+      });
+    }
+
+    console.log(`GET /api/doctors took ${Date.now() - start}ms (optimized aggregation)`);
     res.json(doctors);
   } catch (err) {
     console.error('Error in doctor search:', err);

@@ -1,9 +1,0 @@
-# Query: find doctors
-
-2 results - 2 files
-
-frontend\src\pages\About.js:
-  147:             <a href="/search" className="px-6 py-3 rounded-xl bg-white text-indigo-700 font-bold hover:bg-indigo-50 transition">Find Doctors</a>
-
-frontend\src\pages\DoctorDetails.js:
-  638:                 <Link to="/contact" className="hover:text-indigo-700 block">Contact</LinBook an appoinmentk>
