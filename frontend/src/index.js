@@ -51,6 +51,16 @@ if (typeof window !== "undefined") {
     origConsoleWarn(...args);
   };
 
+  const origConsoleLog = console.log.bind(console);
+  const origConsoleInfo = console.info.bind(console);
+  const origConsoleDebug = console.debug.bind(console);
+  let __LOG_COUNT = 0;
+  const LOG_LIMIT = 5;
+  const allow = () => { try { __LOG_COUNT++; return __LOG_COUNT <= LOG_LIMIT; } catch(_) { return true; } };
+  console.log = (...args) => { if (!allow()) return; origConsoleLog(...args); };
+  console.info = (...args) => { if (!allow()) return; origConsoleInfo(...args); };
+  console.debug = (...args) => { if (!allow()) return; origConsoleDebug(...args); };
+
   const NativeRO = window.ResizeObserver;
   const isMobile = typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 640px)').matches : (window.innerWidth < 640);
   if (isMobile) {

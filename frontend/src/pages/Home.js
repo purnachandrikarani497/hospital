@@ -253,7 +253,7 @@ export default function Home() {
                   <picture>
                     <img src={heroSrc} alt="Doctor and patient consultation in clinic" loading="lazy" decoding="async" width="1280" height="720" className="relative w-full h-[420px] object-contain object-center rounded-3xl shadow-2xl hover:shadow-3xl transition-all duration-700 border-4 border-white/60 group-hover:border-white/80 bg-white" />
                   </picture>
-                  <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg animate-pulse">
+                  <div className="absolute top-4 left-6 bg-white/90 backdrop-blur-sm rounded-full p-3 shadow-lg animate-pulse">
                     <span className="text-blue-600 text-2xl">🏥</span>
                   </div>
                 </div>

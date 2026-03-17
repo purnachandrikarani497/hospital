@@ -724,7 +724,7 @@ export default function Appointments() {
   };
 
   return (
-    <div className="page-gradient min-h-screen flex flex-col items-center pt-24 md:pt-32 pb-20 px-4">
+    <div className="page-gradient min-h-screen flex flex-col items-start pt-12 md:pt-16 pb-12 px-4">
       <Helmet>
         <title>{isPrescriptionsView ? 'Prescriptions | HospoZen' : 'My Appointments | HospoZen'}</title>
         <meta name="description" content={isPrescriptionsView ? 'View and access your prescriptions, print or share securely.' : 'Manage bookings, join online consultations, pay, and follow up with doctors.'} />
@@ -753,16 +753,15 @@ export default function Appointments() {
       </Helmet>
 
       <div className="w-full animate-fade-in">
-        <div className="relative mb-12 text-center">
-          <h1 className="inline-block px-10 py-4 text-3xl sm:text-4xl md:text-5xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
+        <div className="relative mb-6 text-left">
+          <h1 className="inline-block px-2 py-1 text-2xl sm:text-3xl md:text-4xl font-black bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 bg-clip-text text-transparent relative z-10">
             {isPrescriptionsView ? 'My Prescriptions' : 'My Appointments'}
-            <div className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-blue-600/20 to-purple-600/20 rounded-full blur-sm"></div>
           </h1>
         </div>
 
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl border border-white/40 overflow-hidden animate-slide-in-up">
+        <div className="bg-white/90 backdrop-blur-md rounded-2xl shadow-xl border border-white/40 overflow-hidden animate-slide-in-up">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
+            <div className="flex flex-col items-center justify-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
               <p className="text-slate-600 font-medium">Loading your records...</p>
             </div>
@@ -772,12 +771,12 @@ export default function Appointments() {
               <p className="text-red-600 font-bold text-lg">{error}</p>
             </div>
           ) : (isPrescriptionsView ? presItems.length === 0 : list.length === 0) ? (
-            <div className="p-20 text-center">
+            <div className="p-12 text-left">
               <div className="text-6xl mb-6">📅</div>
               <h3 className="text-2xl font-bold text-slate-800 mb-2">
                 {isPrescriptionsView ? 'No Prescriptions Yet' : 'No Appointments Found'}
               </h3>
-              <p className="text-slate-500 max-w-sm mx-auto">
+              <p className="text-slate-500 max-w-sm">
                 {isPrescriptionsView 
                   ? "Your prescriptions will appear here once your doctor shares them." 
                   : "You haven't booked any appointments yet. Start your healthcare journey today!"}
@@ -791,8 +790,8 @@ export default function Appointments() {
           ) : (
             <div className="divide-y divide-slate-100 custom-scrollbar">
               {(isPrescriptionsView ? presItems : list).map((a) => (
-                <div key={a._id} className="p-6 md:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 hover:bg-slate-50/50 transition-colors duration-300">
-                  <div className="flex items-center gap-6">
+                <div key={a._id} className="p-4 md:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 transition-colors duration-300">
+                  <div className="flex items-center gap-4">
                     <div className="relative flex-shrink-0">
                       {(() => {
                         try {
@@ -812,7 +811,7 @@ export default function Appointments() {
                     </div>
                     <div className="flex-grow">
                       <div className="flex items-center gap-3 mb-1">
-                        <h3 className="text-xl font-bold text-slate-900">
+                        <h3 className="text-lg font-bold text-slate-900">
                           {isPrescriptionsView ? a.doctor : (a.doctor?.name ? `Dr. ${a.doctor?.name}` : 'Unknown Doctor')}
                         </h3>
                         {!isPrescriptionsView && (() => {
@@ -825,9 +824,9 @@ export default function Appointments() {
                           );
                         })()}
                       </div>
-                      <div className="flex flex-col gap-1 text-sm font-medium">
-                        <div className="text-indigo-600">{profiles.get(isPrescriptionsView ? a.docId : String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</div>
-                        <div className="text-slate-500 flex items-center gap-2">
+                      <div className="flex flex-col gap-1 text-lg font-medium">
+                        <div className="text-indigo-600 text-lg">{profiles.get(isPrescriptionsView ? a.docId : String(a.doctor?._id || a.doctor))?.specializations?.join(', ') || '--'}</div>
+                        <div className="text-slate-500 flex items-center gap-2 text-lg">
                           <span>📅 {isPrescriptionsView ? a.date : a.date}</span>
                           <span className="text-slate-300">|</span>
                           <span>🕒 {isPrescriptionsView ? a.time : a.startTime}</span>
