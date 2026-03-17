@@ -23,8 +23,8 @@ export default function AdminHeader() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
-        <div className="flex items-center justify-between h-16 gap-x-4">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 relative">
+        <div className="flex items-center h-16 gap-x-6">
           {/* Enhanced Logo Section */}
           <Link to="/admin/dashboard" className="flex items-center gap-2 group hover:scale-105 transition-all duration-300 flex-shrink-0">
             <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
@@ -50,7 +50,7 @@ export default function AdminHeader() {
           </nav>
 
           {/* Enhanced User Actions */}
-          <div className="flex items-center space-x-4 flex-shrink-0">
+          <div className="flex items-center space-x-4 ml-auto mr-2 sm:mr-4">
             {/* Enhanced Mobile Menu Button */}
             <button
               className="xl:hidden p-3 rounded-xl text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-all duration-300 border border-gray-200 hover:border-blue-300"

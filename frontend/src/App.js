@@ -184,11 +184,11 @@ function Header({ onSupportOpen }) {
   if (hideHeader) return null;
   return (
     <header className="sticky top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md shadow-xl border-b border-blue-200/50">
-      <div className="max-w-full px-8 sm:px-12 relative">
+      <div className="max-w-full px-6 sm:px-8 relative">
         <div className="flex items-center h-16">
           {/* Left Section: Logo */}
           <div className="flex-shrink-0">
-            <Link to="/" aria-label="Go to HospoZen Home" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300">
+            <Link to="/" aria-label="Go to HospoZen Home" className="flex items-center gap-4 group hover:scale-105 transition-all duration-300 ml-3">
               <div className="w-10 h-10 bg-gradient-to-br from-blue-500 via-purple-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-300 border-2 border-white/20">
                 <div className="text-white">
                   <Logo size={20} />
@@ -203,8 +203,8 @@ function Header({ onSupportOpen }) {
           </div>
 
           {/* Center Section: Desktop Navigation */}
-          <div className="flex-1 flex justify-start ml-10">
-            <nav className="hidden lg:flex items-center space-x-10">
+          <div className="flex-1 min-w-0 flex justify-start ml-4">
+            <nav className="hidden lg:flex items-center space-x-5">
               {(() => {
                 const p = location.pathname;
                 const s = location.search;
@@ -266,15 +266,15 @@ function Header({ onSupportOpen }) {
           </div>
 
           {/* Right Section: Contact + User Actions */}
-          <div className="flex-shrink-0 flex items-center gap-2 sm:gap-4 ml-auto">
+          <div className="flex-shrink-0 flex items-center gap-1 sm:gap-1 ml-2 mr-10">
             {/* Contact Info */}
-            <div className="hidden lg:flex items-center border-r border-gray-200 pr-4">
-              <div className="flex flex-col items-start text-sm font-bold text-gray-800 ml-4">
-                <div className="flex items-center gap-2">
+            <div className="hidden lg:flex items-center border-r border-gray-200 pr-0">
+              <div className="flex flex-col items-start text-sm font-bold text-gray-800 ml-0">
+                <div className="flex items-center gap-1">
                   <span className="text-xs font-semibold text-blue-600">HELPLINE:</span>
                   <span>+91 98765 43210</span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1">
                   <span className="text-xs font-semibold text-blue-600">EMAIL:</span>
                   <span>hospozen@gmail.com</span>
                 </div>
@@ -294,7 +294,7 @@ function Header({ onSupportOpen }) {
 
             {/* Enhanced Authentication Section */}
             {token ? (
-              <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-2">
                 {/* Enhanced Notification Bell */}
                 <div className="relative">
                   <button
@@ -325,7 +325,7 @@ function Header({ onSupportOpen }) {
                       <path d="M12 2a7 7 0 00-7 7v3l-2 3h18l-2-3V9a7 7 0 00-7-7z" stroke="#2563EB" strokeWidth="2" fill="none"/>
                     </svg>
                     {bell > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
+                      <span className="absolute -top-1 right-0 bg-gradient-to-r from-red-500 to-pink-500 text-white text-xs rounded-full w-5 h-5 sm:w-6 sm:h-6 flex items-center justify-center font-bold shadow-lg animate-pulse">
                         {bell > 9 ? '9+' : bell}
                       </span>
                     )}
